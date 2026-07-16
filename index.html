@@ -126,21 +126,19 @@
     <div id="abaLogin" class="aba ativa">
         <div class="login-container" id="loginContainer">
             <h2>🔐 Entrar</h2>
-            <input type="text" id="loginTelefone" placeholder="Ex: +55 2799999" maxlength="15">
+            <input type="text" id="loginTelefone" placeholder="Ex: +55 2799999">
             <input type="password" id="loginSenha" placeholder="Senha">
             <div id="loginMensagem" style="color:#ff6a6a;text-align:center;margin-top:0.5rem;font-size:0.9rem;"></div>
             <button class="btn-login" onclick="fazerLogin()">Entrar</button>
             <button class="btn-criar-conta" onclick="mostrarCriarConta()">Criar conta</button>
             <div class="aviso">
-                <strong>⚠️ Sem conta você pode navegar, mas não pode participar do recrutamento.</strong><br>
-                <span style="font-size:0.8rem;">Usuário não cadastrado será identificado no recrutamento.</span>
+                <strong>⚠️ Sem conta você pode navegar, mas não pode participar do recrutamento.</strong>
             </div>
-            <div class="usuario-logado" id="usuarioLogadoInfo"></div>
         </div>
 
         <div id="criarContaContainer" class="login-container hidden">
             <h2>📝 Criar Conta</h2>
-            <input type="text" id="criarTelefone" placeholder="Ex: +55 2799999" maxlength="15">
+            <input type="text" id="criarTelefone" placeholder="Ex: +55 2799999">
             <input type="password" id="criarSenha" placeholder="Senha (mínimo 6 caracteres)">
             <input type="text" id="criarNome" placeholder="Nome de usuário">
             <div id="criarMensagem" style="color:#ff6a6a;text-align:center;margin-top:0.5rem;font-size:0.9rem;"></div>
@@ -408,13 +406,9 @@
                 if (banido) {
                     recrutamentoStatus.innerHTML = `⛔ <strong style="color:#ff4a4a;">VOCÊ FOI BANIDO!</strong> Motivo: ${banido.motivo}`;
                     btnFinalizar.disabled = true;
-                    btnFinalizar.style.opacity = '0.5';
-                    btnFinalizar.style.cursor = 'not-allowed';
                 } else {
                     recrutamentoStatus.innerHTML = `✅ <strong style="color:#6a8a6a;">Você está logado como ${usuarioAtual.nome}.</strong> Pode participar do recrutamento.`;
                     btnFinalizar.disabled = false;
-                    btnFinalizar.style.opacity = '1';
-                    btnFinalizar.style.cursor = 'pointer';
                 }
             });
 
@@ -428,8 +422,6 @@
             btnSair.classList.add('hidden');
             recrutamentoStatus.innerHTML = '⚠️ Faça login para participar do recrutamento.';
             btnFinalizar.disabled = true;
-            btnFinalizar.style.opacity = '0.5';
-            btnFinalizar.style.cursor = 'not-allowed';
             menuAdmin.classList.add('hidden');
             abaAdmin.classList.add('hidden');
             document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
@@ -462,7 +454,7 @@
                 document.getElementById('loginSenha').value = '';
             })
             .catch((error) => {
-                msg.textContent = '❌ Erro: ' + error.message;
+                msg.textContent = '❌ ' + error.message;
                 msg.style.color = '#ff6a6a';
             });
     };
@@ -510,7 +502,7 @@
                 });
             })
             .catch((error) => {
-                msg.textContent = '❌ Erro: ' + error.message;
+                msg.textContent = '❌ ' + error.message;
                 msg.style.color = '#ff6a6a';
             });
     };
