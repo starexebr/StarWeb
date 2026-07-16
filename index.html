@@ -8,615 +8,92 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-        }
-        body {
-            background-color: #0d0a0a;
-            color: #f0e6e6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .topbar {
-            background: #1a0f0f;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            border-bottom: 2px solid #b31b1b;
-            box-shadow: 0 2px 12px rgba(180, 20, 20, 0.3);
-            position: relative;
-        }
-        .menu-hamburguer {
-            font-size: 2.2rem;
-            cursor: pointer;
-            color: #d42a2a;
-            background: none;
-            border: none;
-            padding: 0 0.5rem 0 0;
-            line-height: 1;
-            text-shadow: 0 0 12px #aa1a1a;
-            transition: 0.2s;
-        }
-        .menu-hamburguer:hover {
-            color: #ff5a5a;
-            transform: scale(1.05);
-        }
-        .menu-hamburguer.hidden {
-            display: none !important;
-        }
-        .logo-symbol {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #d42a2a;
-            letter-spacing: 2px;
-            text-shadow: 0 0 8px #aa1a1a;
-            margin-left: 0.8rem;
-        }
-        .menu-lateral {
-            position: fixed;
-            top: 0;
-            left: -300px;
-            width: 280px;
-            height: 100%;
-            background: #1a0f0f;
-            border-right: 3px solid #b31b1b;
-            box-shadow: 6px 0 30px rgba(0,0,0,0.8);
-            transition: left 0.3s ease;
-            z-index: 1000;
-            padding: 2rem 1.2rem;
-            overflow-y: auto;
-        }
-        .menu-lateral.aberto {
-            left: 0;
-        }
-        .menu-lateral .fechar {
-            text-align: right;
-            font-size: 2rem;
-            color: #b33;
-            cursor: pointer;
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-        }
-        .menu-lateral .fechar:hover {
-            color: #ff4a4a;
-        }
-        .menu-lateral a {
-            display: block;
-            color: #e0c0c0;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.2rem;
-            padding: 0.8rem 1rem;
-            border-radius: 12px;
-            margin: 0.4rem 0;
-            background: #2a1818;
-            border-left: 4px solid #5f2a2a;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-        .menu-lateral a:hover {
-            background: #4f2222;
-            border-left-color: #e05050;
-            color: #ffd0d0;
-            box-shadow: 0 0 16px #6f1a1a;
-        }
-        .menu-lateral a.ativo {
-            background: #6f1f1f;
-            border-left-color: #e05050;
-            color: #fff0f0;
-        }
-        .menu-lateral a.hidden {
-            display: none !important;
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 999;
-            display: none;
-        }
-        .overlay.ativo {
-            display: block;
-        }
-        .main-title {
-            text-align: center;
-            padding: 2rem 0 1rem 0;
-        }
-        .main-title h1 {
-            font-size: 6rem;
-            font-weight: 900;
-            color: #c92a2a;
-            text-shadow: 0 0 30px #7a1a1a, 0 0 60px #4a0a0a;
-            letter-spacing: 8px;
-            word-break: break-word;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem 2rem;
-            flex: 1;
-        }
-        .aba {
-            display: none;
-            animation: fade 0.3s ease;
-        }
-        .aba.ativa {
-            display: block;
-        }
-        @keyframes fade {
-            0% { opacity: 0.4; transform: translateY(8px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .card {
-            background: #1a1111;
-            border-left: 6px solid #b31b1b;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-            margin-bottom: 2rem;
-        }
-        .card h2 {
-            color: #e05050;
-            font-size: 2rem;
-            margin-bottom: 1.2rem;
-            border-bottom: 1px solid #4f2222;
-            padding-bottom: 0.5rem;
-        }
-        .card p, .card li {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: #d4c0c0;
-        }
-        .card ul {
-            list-style: none;
-            padding-left: 0.5rem;
-        }
-        .card ul li {
-            padding: 0.4rem 0;
-            border-bottom: 1px solid #2f1a1a;
-        }
-        .card ul li::before {
-            content: "✧ ";
-            color: #b31b1b;
-            font-weight: bold;
-        }
-        .link-destaque {
-            background: #2a1212;
-            padding: 1.5rem;
-            border-radius: 16px;
-            border: 2px dashed #b31b1b;
-            text-align: center;
-            margin: 1.5rem 0;
-        }
-        .link-destaque a {
-            color: #ff8a8a;
-            font-size: 1.8rem;
-            font-weight: 700;
-            text-decoration: none;
-            word-break: break-all;
-            background: #1f0e0e;
-            padding: 0.6rem 1.8rem;
-            border-radius: 60px;
-            border: 1px solid #a33;
-            transition: 0.2s;
-            display: inline-block;
-        }
-        .link-destaque a:hover {
-            background: #3f1a1a;
-            color: #ffbaba;
-            border-color: #e05050;
-            box-shadow: 0 0 30px #7a1a1a;
-        }
-        .btn-finalizar {
-            background: #a32020;
-            color: #fff;
-            border: none;
-            font-size: 1.6rem;
-            font-weight: 700;
-            padding: 0.8rem 2.8rem;
-            border-radius: 60px;
-            cursor: pointer;
-            box-shadow: 0 0 20px #6f1a1a;
-            transition: 0.15s;
-            margin-top: 1.8rem;
-            display: inline-block;
-            border: 1px solid #d43a3a;
-        }
-        .btn-finalizar:hover {
-            background: #c92a2a;
-            transform: scale(1.02);
-            box-shadow: 0 0 40px #a32020;
-        }
-        .btn-finalizar:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .btn-contratar {
-            background: #a32020;
-            color: #fff;
-            border: none;
-            font-size: 1.6rem;
-            font-weight: 700;
-            padding: 0.8rem 2.8rem;
-            border-radius: 60px;
-            cursor: pointer;
-            box-shadow: 0 0 20px #6f1a1a;
-            transition: 0.15s;
-            margin-top: 1.2rem;
-            display: inline-block;
-            border: 1px solid #d43a3a;
-        }
-        .btn-contratar:hover {
-            background: #c92a2a;
-            transform: scale(1.02);
-            box-shadow: 0 0 40px #a32020;
-        }
-        .pergunta-box {
-            background: #120b0b;
-            padding: 1.2rem 1.8rem;
-            border-radius: 12px;
-            margin: 1rem 0;
-            border-left: 4px solid #a33;
-        }
-        .pergunta-box label {
-            display: block;
-            font-weight: 600;
-            color: #dbb0b0;
-            margin-bottom: 0.6rem;
-            font-size: 1.1rem;
-        }
-        .opcoes {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem 1.8rem;
-        }
-        .opcoes label {
-            font-weight: 400;
-            color: #c0a8a8;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            cursor: pointer;
-        }
-        .opcoes input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #b31b1b;
-            transform: scale(1.1);
-        }
-        .regras-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.8rem 1.5rem;
-        }
-        @media (max-width: 700px) {
-            .regras-grid {
-                grid-template-columns: 1fr;
-            }
-            .main-title h1 {
-                font-size: 3.8rem;
-                letter-spacing: 4px;
-            }
-            .topbar {
-                flex-wrap: wrap;
-            }
-            .logo-symbol {
-                margin-left: 0.3rem;
-                font-size: 1.4rem;
-            }
-            .menu-lateral {
-                width: 260px;
-                left: -280px;
-            }
-        }
-        .patente-card {
-            background: #1e1212;
-            padding: 1rem 1.5rem;
-            border-radius: 12px;
-            margin: 0.8rem 0;
-            border-left: 6px solid #b31b1b;
-        }
-        .patente-card h3 {
-            color: #e06060;
-            font-size: 1.5rem;
-        }
-        .bot-destaque {
-            background: #1e0f0f;
-            border: 2px solid #8f2a2a;
-            border-radius: 16px;
-            padding: 1.8rem;
-            margin: 1.2rem 0;
-        }
-        .bot-destaque h3 {
-            color: #e06060;
-            font-size: 1.8rem;
-            margin-bottom: 0.8rem;
-        }
-        .bot-destaque ul {
-            list-style: none;
-        }
-        .bot-destaque ul li {
-            padding: 0.3rem 0;
-            color: #d4b0b0;
-        }
-        .bot-destaque ul li::before {
-            content: "⚡ ";
-            color: #b31b1b;
-        }
-        .login-container {
-            max-width: 450px;
-            margin: 2rem auto;
-            background: #1a1111;
-            padding: 2.5rem;
-            border-radius: 20px;
-            border: 2px solid #6f2a2a;
-            box-shadow: 0 0 40px rgba(150, 20, 20, 0.3);
-        }
-        .login-container h2 {
-            color: #e05050;
-            text-align: center;
-            margin-bottom: 1.8rem;
-            font-size: 2rem;
-            border-bottom: 2px solid #4f2222;
-            padding-bottom: 0.8rem;
-        }
-        .login-container input {
-            width: 100%;
-            padding: 0.9rem 1.2rem;
-            margin: 0.6rem 0;
-            background: #120b0b;
-            border: 2px solid #4f2a2a;
-            border-radius: 12px;
-            color: #f0e0e0;
-            font-size: 1rem;
-            transition: 0.2s;
-        }
-        .login-container input:focus {
-            outline: none;
-            border-color: #b31b1b;
-            box-shadow: 0 0 16px #6f1a1a;
-        }
-        .login-container input::placeholder {
-            color: #7a5a5a;
-        }
-        .btn-login {
-            width: 100%;
-            padding: 0.9rem;
-            margin-top: 1rem;
-            background: #a32020;
-            color: #fff;
-            border: none;
-            border-radius: 60px;
-            font-size: 1.3rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            border: 1px solid #d43a3a;
-        }
-        .btn-login:hover {
-            background: #c92a2a;
-            box-shadow: 0 0 30px #a32020;
-            transform: scale(1.02);
-        }
-        .btn-criar-conta {
-            width: 100%;
-            padding: 0.8rem;
-            margin-top: 0.8rem;
-            background: transparent;
-            color: #d4a0a0;
-            border: 2px solid #4f2a2a;
-            border-radius: 60px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-criar-conta:hover {
-            background: #2a1818;
-            border-color: #b31b1b;
-            color: #ffd0d0;
-        }
-        .login-container .aviso {
-            color: #8a6a6a;
-            font-size: 0.9rem;
-            text-align: center;
-            margin-top: 0.8rem;
-            border-top: 1px solid #2f1a1a;
-            padding-top: 0.8rem;
-        }
-        .login-container .aviso strong {
-            color: #b33;
-        }
-        .admin-panel {
-            background: #1a1111;
-            border-left: 6px solid #b31b1b;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
-            margin-top: 2rem;
-        }
-        .admin-panel h3 {
-            color: #e05050;
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #4f2222;
-            padding-bottom: 0.5rem;
-        }
-        .admin-panel table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        .admin-panel th, .admin-panel td {
-            padding: 0.8rem;
-            text-align: left;
-            border-bottom: 1px solid #2f1a1a;
-            color: #d4c0c0;
-        }
-        .admin-panel th {
-            color: #e06060;
-            font-weight: 700;
-        }
-        .admin-panel .btn-banir {
-            background: #6f1f1f;
-            color: #fff;
-            border: none;
-            padding: 0.4rem 1.2rem;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-            margin-right: 0.3rem;
-        }
-        .admin-panel .btn-banir:hover {
-            background: #a32020;
-            box-shadow: 0 0 20px #6f1a1a;
-        }
-        .admin-panel .btn-desbanir {
-            background: #2a6f2a;
-            color: #fff;
-            border: none;
-            padding: 0.4rem 1.2rem;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-            margin-right: 0.3rem;
-        }
-        .admin-panel .btn-desbanir:hover {
-            background: #3a8f3a;
-            box-shadow: 0 0 20px #2a6f2a;
-        }
-        .admin-panel .btn-banir:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .status-banido {
-            color: #ff4a4a;
-            font-weight: 700;
-        }
-        .status-ativo {
-            color: #6a8a6a;
-            font-weight: 700;
-        }
-        .hidden {
-            display: none !important;
-        }
-        .btn-sair {
-            background: #3a1a1a;
-            color: #d4a0a0;
-            border: 1px solid #5f2a2a;
-            padding: 0.4rem 1.2rem;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-left: 1rem;
-            transition: 0.2s;
-        }
-        .btn-sair:hover {
-            background: #5f2a2a;
-            color: #ffd0d0;
-        }
-        .etiqueta-badge {
-            background: #3a2a2a;
-            padding: 0.2rem 0.8rem;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            color: #d4a0a0;
-            border: 1px solid #5f3a3a;
-            display: inline-block;
-        }
-        .etiqueta-editar {
-            display: flex;
-            gap: 0.3rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .etiqueta-editar input {
-            background: #120b0b;
-            border: 1px solid #4f2a2a;
-            color: #f0e0e0;
-            padding: 0.3rem 0.6rem;
-            border-radius: 8px;
-            width: 100px;
-        }
-        .etiqueta-editar button {
-            background: #2a2a6f;
-            color: #fff;
-            border: none;
-            padding: 0.2rem 0.8rem;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-        .etiqueta-editar button:hover {
-            background: #3a3a8f;
-        }
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #b88;
-        }
-        .spinner {
-            border: 4px solid #2f1a1a;
-            border-top: 4px solid #b31b1b;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 1rem auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .mensagem-erro {
-            color: #ff6a6a;
-            text-align: center;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-        }
-        .mensagem-sucesso {
-            color: #6a8a6a;
-            text-align: center;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-        }
-        .cargo-badge {
-            display: inline-block;
-            padding: 0.2rem 0.8rem;
-            border-radius: 30px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-        .cargo-super {
-            background: #6f1a1a;
-            color: #ff6a6a;
-            border: 1px solid #b31b1b;
-        }
-        .cargo-admin {
-            background: #1a3a6f;
-            color: #6a9aff;
-            border: 1px solid #2a5a9f;
-        }
-        .cargo-membro {
-            background: #2a2a2a;
-            color: #b0b0b0;
-            border: 1px solid #4a4a4a;
-        }
-        .usuario-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,system-ui,sans-serif}
+        body{background-color:#0d0a0a;color:#f0e6e6;min-height:100vh;display:flex;flex-direction:column}
+        .topbar{background:#1a0f0f;padding:1rem 1.5rem;display:flex;align-items:center;border-bottom:2px solid #b31b1b;box-shadow:0 2px 12px rgba(180,20,20,0.3);position:relative}
+        .menu-hamburguer{font-size:2.2rem;cursor:pointer;color:#d42a2a;background:0;border:0;padding:0 0.5rem 0 0;line-height:1;text-shadow:0 0 12px #aa1a1a;transition:0.2s}
+        .menu-hamburguer:hover{color:#ff5a5a;transform:scale(1.05)}
+        .menu-hamburguer.hidden{display:none!important}
+        .logo-symbol{font-size:1.8rem;font-weight:800;color:#d42a2a;letter-spacing:2px;text-shadow:0 0 8px #aa1a1a;margin-left:0.8rem}
+        .menu-lateral{position:fixed;top:0;left:-300px;width:280px;height:100%;background:#1a0f0f;border-right:3px solid #b31b1b;box-shadow:6px 0 30px rgba(0,0,0,0.8);transition:left 0.3s ease;z-index:1000;padding:2rem 1.2rem;overflow-y:auto}
+        .menu-lateral.aberto{left:0}
+        .menu-lateral .fechar{text-align:right;font-size:2rem;color:#b33;cursor:pointer;margin-bottom:1.5rem;font-weight:700}
+        .menu-lateral .fechar:hover{color:#ff4a4a}
+        .menu-lateral a{display:block;color:#e0c0c0;text-decoration:none;font-weight:600;font-size:1.2rem;padding:0.8rem 1rem;border-radius:12px;margin:0.4rem 0;background:#2a1818;border-left:4px solid #5f2a2a;transition:0.2s;cursor:pointer}
+        .menu-lateral a:hover{background:#4f2222;border-left-color:#e05050;color:#ffd0d0;box-shadow:0 0 16px #6f1a1a}
+        .menu-lateral a.ativo{background:#6f1f1f;border-left-color:#e05050;color:#fff0f0}
+        .menu-lateral a.hidden{display:none!important}
+        .overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:none}
+        .overlay.ativo{display:block}
+        .main-title{text-align:center;padding:2rem 0 1rem 0}
+        .main-title h1{font-size:6rem;font-weight:900;color:#c92a2a;text-shadow:0 0 30px #7a1a1a,0 0 60px #4a0a0a;letter-spacing:8px;word-break:break-word}
+        .container{max-width:1200px;margin:0 auto;padding:1.5rem 2rem;flex:1}
+        .aba{display:none;animation:fade 0.3s ease}
+        .aba.ativa{display:block}
+        @keyframes fade{0%{opacity:0.4;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+        .card{background:#1a1111;border-left:6px solid #b31b1b;padding:2rem;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.7);margin-bottom:2rem}
+        .card h2{color:#e05050;font-size:2rem;margin-bottom:1.2rem;border-bottom:1px solid #4f2222;padding-bottom:0.5rem}
+        .card p,.card li{font-size:1.1rem;line-height:1.6;color:#d4c0c0}
+        .card ul{list-style:none;padding-left:0.5rem}
+        .card ul li{padding:0.4rem 0;border-bottom:1px solid #2f1a1a}
+        .card ul li::before{content:"✧ ";color:#b31b1b;font-weight:bold}
+        .link-destaque{background:#2a1212;padding:1.5rem;border-radius:16px;border:2px dashed #b31b1b;text-align:center;margin:1.5rem 0}
+        .link-destaque a{color:#ff8a8a;font-size:1.8rem;font-weight:700;text-decoration:none;word-break:break-all;background:#1f0e0e;padding:0.6rem 1.8rem;border-radius:60px;border:1px solid #a33;transition:0.2s;display:inline-block}
+        .link-destaque a:hover{background:#3f1a1a;color:#ffbaba;border-color:#e05050;box-shadow:0 0 30px #7a1a1a}
+        .btn-finalizar{background:#a32020;color:#fff;border:0;font-size:1.6rem;font-weight:700;padding:0.8rem 2.8rem;border-radius:60px;cursor:pointer;box-shadow:0 0 20px #6f1a1a;transition:0.15s;margin-top:1.8rem;display:inline-block;border:1px solid #d43a3a}
+        .btn-finalizar:hover{background:#c92a2a;transform:scale(1.02);box-shadow:0 0 40px #a32020}
+        .btn-finalizar:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+        .btn-contratar{background:#a32020;color:#fff;border:0;font-size:1.6rem;font-weight:700;padding:0.8rem 2.8rem;border-radius:60px;cursor:pointer;box-shadow:0 0 20px #6f1a1a;transition:0.15s;margin-top:1.2rem;display:inline-block;border:1px solid #d43a3a}
+        .btn-contratar:hover{background:#c92a2a;transform:scale(1.02);box-shadow:0 0 40px #a32020}
+        .pergunta-box{background:#120b0b;padding:1.2rem 1.8rem;border-radius:12px;margin:1rem 0;border-left:4px solid #a33}
+        .pergunta-box label{display:block;font-weight:600;color:#dbb0b0;margin-bottom:0.6rem;font-size:1.1rem}
+        .opcoes{display:flex;flex-wrap:wrap;gap:0.8rem 1.8rem}
+        .opcoes label{font-weight:400;color:#c0a8a8;display:flex;align-items:center;gap:0.4rem;cursor:pointer}
+        .opcoes input[type="checkbox"]{width:18px;height:18px;accent-color:#b31b1b;transform:scale(1.1)}
+        .regras-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem 1.5rem}
+        @media(max-width:700px){.regras-grid{grid-template-columns:1fr}.main-title h1{font-size:3.8rem;letter-spacing:4px}.topbar{flex-wrap:wrap}.logo-symbol{margin-left:0.3rem;font-size:1.4rem}.menu-lateral{width:260px;left:-280px}}
+        .patente-card{background:#1e1212;padding:1rem 1.5rem;border-radius:12px;margin:0.8rem 0;border-left:6px solid #b31b1b}
+        .patente-card h3{color:#e06060;font-size:1.5rem}
+        .bot-destaque{background:#1e0f0f;border:2px solid #8f2a2a;border-radius:16px;padding:1.8rem;margin:1.2rem 0}
+        .bot-destaque h3{color:#e06060;font-size:1.8rem;margin-bottom:0.8rem}
+        .bot-destaque ul{list-style:none}
+        .bot-destaque ul li{padding:0.3rem 0;color:#d4b0b0}
+        .bot-destaque ul li::before{content:"⚡ ";color:#b31b1b}
+        .login-container{max-width:450px;margin:2rem auto;background:#1a1111;padding:2.5rem;border-radius:20px;border:2px solid #6f2a2a;box-shadow:0 0 40px rgba(150,20,20,0.3)}
+        .login-container h2{color:#e05050;text-align:center;margin-bottom:1.8rem;font-size:2rem;border-bottom:2px solid #4f2222;padding-bottom:0.8rem}
+        .login-container input{width:100%;padding:0.9rem 1.2rem;margin:0.6rem 0;background:#120b0b;border:2px solid #4f2a2a;border-radius:12px;color:#f0e0e0;font-size:1rem;transition:0.2s}
+        .login-container input:focus{outline:0;border-color:#b31b1b;box-shadow:0 0 16px #6f1a1a}
+        .login-container input::placeholder{color:#7a5a5a}
+        .btn-login{width:100%;padding:0.9rem;margin-top:1rem;background:#a32020;color:#fff;border:0;border-radius:60px;font-size:1.3rem;font-weight:700;cursor:pointer;transition:0.2s;border:1px solid #d43a3a}
+        .btn-login:hover{background:#c92a2a;box-shadow:0 0 30px #a32020;transform:scale(1.02)}
+        .btn-criar-conta{width:100%;padding:0.8rem;margin-top:0.8rem;background:0 0;color:#d4a0a0;border:2px solid #4f2a2a;border-radius:60px;font-size:1rem;font-weight:600;cursor:pointer;transition:0.2s}
+        .btn-criar-conta:hover{background:#2a1818;border-color:#b31b1b;color:#ffd0d0}
+        .login-container .aviso{color:#8a6a6a;font-size:0.9rem;text-align:center;margin-top:0.8rem;border-top:1px solid #2f1a1a;padding-top:0.8rem}
+        .login-container .aviso strong{color:#b33}
+        .admin-panel{background:#1a1111;border-left:6px solid #b31b1b;padding:2rem;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.7);margin-top:2rem}
+        .admin-panel h3{color:#e05050;font-size:1.8rem;margin-bottom:1rem;border-bottom:1px solid #4f2222;padding-bottom:0.5rem}
+        .admin-panel table{width:100%;border-collapse:collapse;margin-top:1rem}
+        .admin-panel th,.admin-panel td{padding:0.8rem;text-align:left;border-bottom:1px solid #2f1a1a;color:#d4c0c0}
+        .admin-panel th{color:#e06060;font-weight:700}
+        .admin-panel .btn-banir{background:#6f1f1f;color:#fff;border:0;padding:0.4rem 1.2rem;border-radius:30px;cursor:pointer;font-weight:600;transition:0.2s;margin-right:0.3rem}
+        .admin-panel .btn-banir:hover{background:#a32020;box-shadow:0 0 20px #6f1a1a}
+        .admin-panel .btn-desbanir{background:#2a6f2a;color:#fff;border:0;padding:0.4rem 1.2rem;border-radius:30px;cursor:pointer;font-weight:600;transition:0.2s;margin-right:0.3rem}
+        .admin-panel .btn-desbanir:hover{background:#3a8f3a;box-shadow:0 0 20px #2a6f2a}
+        .admin-panel .btn-banir:disabled{opacity:0.4;cursor:not-allowed}
+        .status-banido{color:#ff4a4a;font-weight:700}
+        .status-ativo{color:#6a8a6a;font-weight:700}
+        .hidden{display:none!important}
+        .btn-sair{background:#3a1a1a;color:#d4a0a0;border:1px solid #5f2a2a;padding:0.4rem 1.2rem;border-radius:30px;cursor:pointer;font-weight:600;margin-left:1rem;transition:0.2s}
+        .btn-sair:hover{background:#5f2a2a;color:#ffd0d0}
+        .cargo-badge{display:inline-block;padding:0.2rem 0.8rem;border-radius:30px;font-size:0.75rem;font-weight:700}
+        .cargo-super{background:#6f1a1a;color:#ff6a6a;border:1px solid #b31b1b}
+        .cargo-admin{background:#1a3a6f;color:#6a9aff;border:1px solid #2a5a9f}
+        .cargo-membro{background:#2a2a2a;color:#b0b0b0;border:1px solid #4a4a4a}
+        .mensagem-erro{color:#ff6a6a;text-align:center;margin-top:0.5rem;font-size:0.9rem}
+        .mensagem-sucesso{color:#6a8a6a;text-align:center;margin-top:0.5rem;font-size:0.9rem}
+        .loading{text-align:center;padding:2rem;color:#b88}
+        .spinner{border:4px solid #2f1a1a;border-top:4px solid #b31b1b;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:1rem auto}
+        @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
     </style>
 </head>
 <body>
@@ -624,8 +101,8 @@
 <div class="topbar">
     <button class="menu-hamburguer hidden" id="menuToggle">☰</button>
     <div class="logo-symbol">✦ StarWeb</div>
-    <div style="margin-left:auto; display:flex; align-items:center; gap:0.5rem;">
-        <span id="usuarioDisplay" style="color:#b88; font-size:0.9rem;"></span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:0.5rem;">
+        <span id="usuarioDisplay" style="color:#b88;font-size:0.9rem;"></span>
         <button class="btn-sair hidden" id="btnSair" onclick="logout()">Sair</button>
     </div>
 </div>
@@ -649,7 +126,7 @@
 <div class="container">
 
     <div id="abaLogin" class="aba ativa">
-        <div class="login-container" id="loginContainer">
+        <div class="login-container">
             <h2>🔐 Entrar</h2>
             <input type="text" id="loginUsuario" placeholder="Nome de usuário">
             <input type="password" id="loginSenha" placeholder="Senha">
@@ -661,7 +138,7 @@
             </div>
         </div>
 
-        <div id="criarContaContainer" class="login-container hidden">
+        <div class="login-container hidden" id="criarContaContainer">
             <h2>📝 Criar Conta</h2>
             <input type="text" id="criarNome" placeholder="Nome de usuário">
             <input type="password" id="criarSenha" placeholder="Senha (mínimo 6 caracteres)">
@@ -674,17 +151,12 @@
     <div id="aba1" class="aba">
         <div class="card">
             <h2>✦ Star Community</h2>
-            <p style="font-size:1.2rem; margin-bottom:1rem;">
-                <strong>Star</strong> é uma comunidade no WhatsApp para conversar, fazer amigos, 
-                e com bot que cria figurinhas, mini games, toca música e muito mais.
-            </p>
+            <p style="font-size:1.2rem;margin-bottom:1rem;"><strong>Star</strong> é uma comunidade no WhatsApp para conversar, fazer amigos, e com bot que cria figurinhas, mini games, toca música e muito mais.</p>
             <div class="link-destaque">
-                <span style="display:block; font-size:1.2rem; color:#b88;">📎 Link do grupo</span>
+                <span style="display:block;font-size:1.2rem;color:#b88;">📎 Link do grupo</span>
                 <a href="https://chat.whatsapp.com/H4F1x351JdkDaj2FpdTPRk" target="_blank">https://chat.whatsapp.com/StarWebComunidade</a>
             </div>
-            <p style="color:#b99; font-style:italic; margin-top:0.8rem;">
-                Entre e faça parte da nossa galáxia!
-            </p>
+            <p style="color:#b99;font-style:italic;margin-top:0.8rem;">Entre e faça parte da nossa galáxia!</p>
         </div>
     </div>
 
@@ -710,113 +182,30 @@
     <div id="aba3" class="aba">
         <div class="card">
             <h2>👑 Patentes do Grupo</h2>
-            <div class="patente-card">
-                <h3>Inspetor</h3>
-                <p>Olha regularidades do grupo, brigas etc e chama fiscal.</p>
-            </div>
-            <div class="patente-card">
-                <h3>Colaborador</h3>
-                <p>Dá ideias ao grupo, auxilia na organização.</p>
-            </div>
-            <div class="patente-card">
-                <h3>Fiscal</h3>
-                <p>Para brigas, fecha o grupo quando necessário, dá advertência.</p>
-            </div>
-            <div class="patente-card">
-                <h3>Staff</h3>
-                <p>Faz recrutamentos, comanda todas as patentes.</p>
-            </div>
+            <div class="patente-card"><h3>Inspetor</h3><p>Olha regularidades do grupo, brigas etc e chama fiscal.</p></div>
+            <div class="patente-card"><h3>Colaborador</h3><p>Dá ideias ao grupo, auxilia na organização.</p></div>
+            <div class="patente-card"><h3>Fiscal</h3><p>Para brigas, fecha o grupo quando necessário, dá advertência.</p></div>
+            <div class="patente-card"><h3>Staff</h3><p>Faz recrutamentos, comanda todas as patentes.</p></div>
         </div>
     </div>
 
     <div id="aba4" class="aba">
         <div class="card">
             <h2>📋 Recrutamento</h2>
-            <div id="avisoRecrutamento" style="background:#2a1212; padding:0.8rem 1.5rem; border-radius:12px; margin-bottom:1.2rem; border-left:4px solid #b31b1b;">
+            <div style="background:#2a1212;padding:0.8rem 1.5rem;border-radius:12px;margin-bottom:1.2rem;border-left:4px solid #b31b1b;">
                 <span id="recrutamentoStatus" style="color:#b88;">⚠️ Faça login para participar do recrutamento.</span>
             </div>
             <form id="formRecrutamento">
-                <div class="pergunta-box">
-                    <label>1. O que você faria se estivesse tendo uma discussão séria?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p1" value="intervir"> Intervir calmamente</label>
-                        <label><input type="checkbox" name="p1" value="chamar_fiscal"> Chamar um fiscal</label>
-                        <label><input type="checkbox" name="p1" value="ignorar"> Ignorar</label>
-                        <label><input type="checkbox" name="p1" value="sair"> Sair do grupo</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>2. Você trata amigos e membros comuns iguais no grupo?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p2" value="sim"> Sim, sempre</label>
-                        <label><input type="checkbox" name="p2" value="nao"> Não, trato melhor amigos</label>
-                        <label><input type="checkbox" name="p2" value="depende"> Depende da situação</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>3. Como reagiria a um membro quebrou uma regra grave?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p3" value="advertir"> Advertir</label>
-                        <label><input type="checkbox" name="p3" value="expulsar"> Expulsar imediatamente</label>
-                        <label><input type="checkbox" name="p3" value="chamar_staff"> Chamar staff</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>4. Você tem disponibilidade para ajudar na moderação?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p4" value="sim"> Sim, bastante</label>
-                        <label><input type="checkbox" name="p4" value="parcial"> Parcial</label>
-                        <label><input type="checkbox" name="p4" value="nao"> Não</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>5. Como você lida com membros que desrespeitam os outros?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p5" value="dialogo"> Diálogo primeiro</label>
-                        <label><input type="checkbox" name="p5" value="punicao"> Punição direta</label>
-                        <label><input type="checkbox" name="p5" value="reportar"> Reportar ao staff</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>6. Você já foi administrador ou moderador antes?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p6" value="sim"> Sim</label>
-                        <label><input type="checkbox" name="p6" value="nao"> Não</label>
-                        <label><input type="checkbox" name="p6" value="outro"> Já liderei grupos</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>7. Qual sua opinião sobre usar figuras de criminosos (Epstein, P.diddy, Hitler)?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p7" value="proibido"> É proibido e errado</label>
-                        <label><input type="checkbox" name="p7" value="depende"> Depende do contexto</label>
-                        <label><input type="checkbox" name="p7" value="nao_vejo"> Não vejo problema</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>8. Você respeita a hierarquia do grupo (Staff > Fiscal > Colaborador > Inspetor)?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p8" value="sempre"> Sempre</label>
-                        <label><input type="checkbox" name="p8" value="as_vezes"> Às vezes</label>
-                        <label><input type="checkbox" name="p8" value="nao"> Não</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>9. Como agiria se visse um membro compartilhando dados pessoais?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p9" value="alertar"> Alertar o membro</label>
-                        <label><input type="checkbox" name="p9" value="remover"> Remover a mensagem</label>
-                        <label><input type="checkbox" name="p9" value="reportar_staff"> Reportar ao staff</label>
-                    </div>
-                </div>
-                <div class="pergunta-box">
-                    <label>10. Você está disposto a seguir todas as regras do grupo?</label>
-                    <div class="opcoes">
-                        <label><input type="checkbox" name="p10" value="sim"> Sim, completamente</label>
-                        <label><input type="checkbox" name="p10" value="parcial"> Parcialmente</label>
-                        <label><input type="checkbox" name="p10" value="nao"> Não</label>
-                    </div>
-                </div>
+                <div class="pergunta-box"><label>1. O que você faria se estivesse tendo uma discussão séria?</label><div class="opcoes"><label><input type="checkbox" name="p1" value="intervir"> Intervir calmamente</label><label><input type="checkbox" name="p1" value="chamar_fiscal"> Chamar um fiscal</label><label><input type="checkbox" name="p1" value="ignorar"> Ignorar</label><label><input type="checkbox" name="p1" value="sair"> Sair do grupo</label></div></div>
+                <div class="pergunta-box"><label>2. Você trata amigos e membros comuns iguais no grupo?</label><div class="opcoes"><label><input type="checkbox" name="p2" value="sim"> Sim, sempre</label><label><input type="checkbox" name="p2" value="nao"> Não, trato melhor amigos</label><label><input type="checkbox" name="p2" value="depende"> Depende da situação</label></div></div>
+                <div class="pergunta-box"><label>3. Como reagiria a um membro quebrou uma regra grave?</label><div class="opcoes"><label><input type="checkbox" name="p3" value="advertir"> Advertir</label><label><input type="checkbox" name="p3" value="expulsar"> Expulsar imediatamente</label><label><input type="checkbox" name="p3" value="chamar_staff"> Chamar staff</label></div></div>
+                <div class="pergunta-box"><label>4. Você tem disponibilidade para ajudar na moderação?</label><div class="opcoes"><label><input type="checkbox" name="p4" value="sim"> Sim, bastante</label><label><input type="checkbox" name="p4" value="parcial"> Parcial</label><label><input type="checkbox" name="p4" value="nao"> Não</label></div></div>
+                <div class="pergunta-box"><label>5. Como você lida com membros que desrespeitam os outros?</label><div class="opcoes"><label><input type="checkbox" name="p5" value="dialogo"> Diálogo primeiro</label><label><input type="checkbox" name="p5" value="punicao"> Punição direta</label><label><input type="checkbox" name="p5" value="reportar"> Reportar ao staff</label></div></div>
+                <div class="pergunta-box"><label>6. Você já foi administrador ou moderador antes?</label><div class="opcoes"><label><input type="checkbox" name="p6" value="sim"> Sim</label><label><input type="checkbox" name="p6" value="nao"> Não</label><label><input type="checkbox" name="p6" value="outro"> Já liderei grupos</label></div></div>
+                <div class="pergunta-box"><label>7. Qual sua opinião sobre usar figuras de criminosos (Epstein, P.diddy, Hitler)?</label><div class="opcoes"><label><input type="checkbox" name="p7" value="proibido"> É proibido e errado</label><label><input type="checkbox" name="p7" value="depende"> Depende do contexto</label><label><input type="checkbox" name="p7" value="nao_vejo"> Não vejo problema</label></div></div>
+                <div class="pergunta-box"><label>8. Você respeita a hierarquia do grupo (Staff > Fiscal > Colaborador > Inspetor)?</label><div class="opcoes"><label><input type="checkbox" name="p8" value="sempre"> Sempre</label><label><input type="checkbox" name="p8" value="as_vezes"> Às vezes</label><label><input type="checkbox" name="p8" value="nao"> Não</label></div></div>
+                <div class="pergunta-box"><label>9. Como agiria se visse um membro compartilhando dados pessoais?</label><div class="opcoes"><label><input type="checkbox" name="p9" value="alertar"> Alertar o membro</label><label><input type="checkbox" name="p9" value="remover"> Remover a mensagem</label><label><input type="checkbox" name="p9" value="reportar_staff"> Reportar ao staff</label></div></div>
+                <div class="pergunta-box"><label>10. Você está disposto a seguir todas as regras do grupo?</label><div class="opcoes"><label><input type="checkbox" name="p10" value="sim"> Sim, completamente</label><label><input type="checkbox" name="p10" value="parcial"> Parcialmente</label><label><input type="checkbox" name="p10" value="nao"> Não</label></div></div>
                 <button type="button" class="btn-finalizar" id="btnFinalizarRecrutamento" onclick="finalizarRecrutamento()">✔ FINALIZAR</button>
             </form>
         </div>
@@ -827,37 +216,22 @@
             <h2>🤖 Yoshikawa ESM</h2>
             <div class="bot-destaque">
                 <h3>⚙️ Funcionalidades</h3>
-                <ul>
-                    <li>Mini games interativos</li>
-                    <li>Tocar música no grupo</li>
-                    <li>Responder dúvidas com inteligência</li>
-                    <li>Criar figurinhas personalizadas</li>
-                    <li>Interagir com membros</li>
-                    <li>Animar o grupo com comandos divertidos</li>
-                </ul>
+                <ul><li>Mini games interativos</li><li>Tocar música no grupo</li><li>Responder dúvidas com inteligência</li><li>Criar figurinhas personalizadas</li><li>Interagir com membros</li><li>Animar o grupo com comandos divertidos</li></ul>
             </div>
-            <p style="font-size:1.1rem; margin: 1rem 0;">
-                O Yoshikawa ESM é o coração da Star Community, trazendo entretenimento e utilidade para todos os membros.
-            </p>
+            <p style="font-size:1.1rem;margin:1rem 0;">O Yoshikawa ESM é o coração da Star Community, trazendo entretenimento e utilidade para todos os membros.</p>
             <button class="btn-contratar" onclick="contratarBot()">📞 CONTRATAR</button>
         </div>
     </div>
 
     <div id="aba6" class="aba hidden">
-        <div class="admin-panel" id="adminPanel">
+        <div class="admin-panel">
             <h3>👑 Painel Administrador</h3>
-            <p style="color:#b88; margin-bottom:1rem;">Gerencie os membros cadastrados.</p>
+            <p style="color:#b88;margin-bottom:1rem;">Gerencie os membros cadastrados.</p>
             <div id="listaMembros">
-                <div class="loading" id="loadingMembros">
-                    <div class="spinner"></div>
-                    <p>Carregando membros...</p>
-                </div>
+                <div class="loading" id="loadingMembros"><div class="spinner"></div><p>Carregando membros...</p></div>
                 <table id="tabelaMembrosTable" style="display:none;">
-                    <thead>
-                        <tr><th>Usuário</th><th>Cargo</th><th>Status</th><th>Ações</th></tr>
-                    </thead>
-                    <tbody id="tabelaMembros">
-                    </tbody>
+                    <thead><tr><th>Usuário</th><th>Cargo</th><th>Status</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaMembros"></tbody>
                 </table>
             </div>
         </div>
@@ -889,20 +263,12 @@
                 const doc = await db.collection('usuarios').doc(user.uid).get();
                 if (doc.exists) {
                     const data = doc.data();
-                    usuarioAtual = {
-                        uid: user.uid,
-                        nome: data.nome
-                    };
+                    usuarioAtual = { uid: user.uid, nome: data.nome };
                 } else {
-                    usuarioAtual = {
-                        uid: user.uid,
-                        nome: user.displayName || 'Usuário'
-                    };
+                    usuarioAtual = { uid: user.uid, nome: user.displayName || 'Usuário' };
                 }
                 atualizarInterface();
-            } catch (e) {
-                console.error('Erro ao buscar usuário:', e);
-            }
+            } catch (e) { console.error('Erro ao buscar usuário:', e); }
         } else {
             usuarioAtual = null;
             atualizarInterface();
@@ -918,7 +284,6 @@
     function podeBanir(usuario, alvo) {
         const cargoUsuario = getCargo(usuario);
         const cargoAlvo = getCargo(alvo);
-        
         if (cargoUsuario === 'super') return true;
         if (cargoUsuario === 'admin' && cargoAlvo === 'membro') return true;
         return false;
@@ -950,9 +315,7 @@
             btnSair.classList.remove('hidden');
             menuToggle.classList.remove('hidden');
             
-            linksMenu.forEach(link => {
-                link.classList.remove('hidden');
-            });
+            linksMenu.forEach(link => link.classList.remove('hidden'));
 
             if (cargo === 'super' || cargo === 'admin') {
                 menuAdmin.classList.remove('hidden');
@@ -996,9 +359,7 @@
             menuAdmin.classList.add('hidden');
             abaAdmin.classList.add('hidden');
 
-            linksMenu.forEach(link => {
-                link.classList.add('hidden');
-            });
+            linksMenu.forEach(link => link.classList.add('hidden'));
 
             const abas = document.querySelectorAll('.aba');
             abas.forEach(aba => aba.classList.remove('ativa'));
@@ -1007,16 +368,9 @@
     }
 
     function verificarBanido(nome, callback) {
-        if (!nome) {
-            callback(null);
-            return;
-        }
+        if (!nome) { callback(null); return; }
         db.collection('banidos').doc(nome).get().then(doc => {
-            if (doc.exists) {
-                callback(doc.data());
-            } else {
-                callback(null);
-            }
+            callback(doc.exists ? doc.data() : null);
         }).catch(() => callback(null));
     }
 
@@ -1041,13 +395,9 @@
             })
             .catch((error) => {
                 msg.className = 'mensagem-erro';
-                if (error.code === 'auth/user-not-found') {
-                    msg.textContent = 'Usuário não encontrado.';
-                } else if (error.code === 'auth/wrong-password') {
-                    msg.textContent = 'Senha incorreta.';
-                } else {
-                    msg.textContent = 'Erro: ' + error.message;
-                }
+                if (error.code === 'auth/user-not-found') msg.textContent = 'Usuário não encontrado.';
+                else if (error.code === 'auth/wrong-password') msg.textContent = 'Senha incorreta.';
+                else msg.textContent = 'Erro: ' + error.message;
             });
     };
 
@@ -1126,9 +476,7 @@
         db.collection('usuarios').get().then(snapshot => {
             tbody.innerHTML = '';
             const users = [];
-            snapshot.forEach(doc => {
-                users.push({ id: doc.id, ...doc.data() });
-            });
+            snapshot.forEach(doc => users.push({ id: doc.id, ...doc.data() }));
 
             if (users.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8a6a6a;">Nenhum usuário cadastrado.</td></tr>';
@@ -1148,7 +496,6 @@
 
                 db.collection('banidos').doc(user.nome).get().then(banDoc => {
                     const banido = banDoc.exists ? banDoc.data() : null;
-                    
                     const pode = podeBanir(usuarioAtual ? usuarioAtual.nome : '', user.nome);
                     
                     tr.innerHTML = `
@@ -1201,9 +548,7 @@
 
     window.desbanirUsuario = function(nome) {
         db.collection('banidos').doc(nome).delete()
-            .then(() => {
-                carregarAdminPanel();
-            })
+            .then(() => carregarAdminPanel())
             .catch(err => alert('Erro ao desbanir: ' + err.message));
     };
 
@@ -1224,8 +569,7 @@
             return;
         }
         const mensagem = encodeURIComponent(`📋 *RESPOSTAS RECRUTAMENTO STARWEB*\n\n👤 Usuário: ${usuarioAtual.nome}\n\n` + respostas.join('\n'));
-        const url = `https://wa.me/5527995303545?text=${mensagem}`;
-        window.open(url, '_blank');
+        window.open(`https://wa.me/5527995303545?text=${mensagem}`, '_blank');
     };
 
     window.contratarBot = function() {
