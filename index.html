@@ -553,6 +553,13 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .codigo-verificacao {
+            display: none;
+            margin-top: 0.8rem;
+        }
+        .codigo-verificacao.ativo {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -586,11 +593,16 @@
 
     <div id="abaLogin" class="aba ativa">
         <div class="login-container" id="loginContainer">
-            <h2>🔐 Entrar</h2>
-            <input type="text" id="loginTelefone" placeholder="Número de telefone (ex: 55279999999999)" maxlength="15">
-            <input type="password" id="loginSenha" placeholder="Senha">
+            <h2>🔐 Entrar com Telefone</h2>
+            <input type="text" id="loginTelefone" placeholder="Número com DDD (ex: 55279995303545)" maxlength="15">
             <div id="loginMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
-            <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+            <button class="btn-login" id="btnEnviarCodigo" onclick="enviarCodigo()">📱 Enviar código</button>
+            
+            <div class="codigo-verificacao" id="divCodigoVerificacao">
+                <input type="text" id="codigoVerificacao" placeholder="Digite o código de 6 dígitos" maxlength="6">
+                <button class="btn-login" onclick="verificarCodigo()">✅ Verificar</button>
+            </div>
+            
             <button class="btn-criar-conta" onclick="mostrarCriarConta()">Criar conta</button>
             <div class="aviso">
                 <strong>⚠️ Sem conta você pode navegar, mas não pode participar do recrutamento.</strong><br>
@@ -601,11 +613,16 @@
 
         <div id="criarContaContainer" class="login-container hidden">
             <h2>📝 Criar Conta</h2>
-            <input type="text" id="criarTelefone" placeholder="Número de telefone (ex: 55279999999999)" maxlength="15">
-            <input type="password" id="criarSenha" placeholder="Senha (mínimo 6 caracteres)">
+            <input type="text" id="criarTelefone" placeholder="Número com DDD (ex: 55279995303545)" maxlength="15">
             <input type="text" id="criarNome" placeholder="Nome de usuário">
             <div id="criarMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
-            <button class="btn-login" onclick="criarConta()">Criar conta</button>
+            <button class="btn-login" id="btnCriarEnviarCodigo" onclick="criarContaEnviarCodigo()">📱 Enviar código</button>
+            
+            <div class="codigo-verificacao" id="divCriarCodigoVerificacao">
+                <input type="text" id="criarCodigoVerificacao" placeholder="Digite o código de 6 dígitos" maxlength="6">
+                <button class="btn-login" onclick="criarContaVerificarCodigo()">✅ Verificar e criar</button>
+            </div>
+            
             <button class="btn-criar-conta" onclick="voltarLogin()">Voltar</button>
         </div>
     </div>
@@ -805,6 +822,7 @@
 </div>
 
 <script>
+    // ===== SEU FIREBASE CONFIG =====
     const firebaseConfig = {
         apiKey: "AIzaSyB3HjQERg-sDjz_G2vl1SnfVEQ6Sh0MHBo",
         authDomain: "starweb-a9d85.firebaseapp.com",
@@ -821,6 +839,8 @@
 
     const ADMIN_NUMERO = '5527995303545';
     let usuarioAtual = null;
+    let confirmationResult = null;
+    let telefoneVerificando = '';
 
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -836,7 +856,7 @@
                 } else {
                     usuarioAtual = {
                         uid: user.uid,
-                        nome: user.displayName || 'Usuário',
+                        nome: user.displayName || user.phoneNumber || 'Usuário',
                         telefone: user.phoneNumber || ''
                     };
                 }
@@ -930,77 +950,126 @@
         }).catch(() => callback(null));
     }
 
-    window.fazerLogin = function() {
+    window.enviarCodigo = function() {
         const telefone = document.getElementById('loginTelefone').value.trim();
-        const senha = document.getElementById('loginSenha').value.trim();
         const msg = document.getElementById('loginMensagem');
 
-        if (!telefone || !senha) {
-            msg.textContent = 'Preencha todos os campos.';
+        if (!telefone) {
+            msg.textContent = 'Digite seu número de telefone.';
             return;
         }
 
-        msg.textContent = 'Entrando...';
-        auth.signInWithEmailAndPassword(telefone + '@starweb.com', senha)
-            .then(() => {
-                msg.textContent = '';
-                document.getElementById('loginTelefone').value = '';
-                document.getElementById('loginSenha').value = '';
+        msg.textContent = 'Enviando código...';
+        
+        auth.signInWithPhoneNumber(telefone, window.RecaptchaVerifier)
+            .then((result) => {
+                confirmationResult = result;
+                telefoneVerificando = telefone;
+                msg.textContent = '✅ Código enviado! Digite abaixo:';
+                document.getElementById('divCodigoVerificacao').classList.add('ativo');
+                document.getElementById('btnEnviarCodigo').textContent = '📱 Reenviar código';
             })
             .catch((error) => {
-                msg.textContent = 'Erro: ' + error.message;
+                msg.textContent = '❌ Erro: ' + error.message;
+            });
+    };
+
+    window.verificarCodigo = function() {
+        const codigo = document.getElementById('codigoVerificacao').value.trim();
+        const msg = document.getElementById('loginMensagem');
+
+        if (!codigo) {
+            msg.textContent = 'Digite o código recebido.';
+            return;
+        }
+
+        msg.textContent = 'Verificando...';
+        
+        confirmationResult.confirm(codigo)
+            .then((result) => {
+                msg.textContent = '✅ Login realizado com sucesso!';
+                document.getElementById('codigoVerificacao').value = '';
+                document.getElementById('divCodigoVerificacao').classList.remove('ativo');
+            })
+            .catch((error) => {
+                msg.textContent = '❌ Código inválido. Tente novamente.';
             });
     };
 
     window.mostrarCriarConta = function() {
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('criarContaContainer').classList.remove('hidden');
+        document.getElementById('loginMensagem').textContent = '';
     };
 
     window.voltarLogin = function() {
         document.getElementById('criarContaContainer').classList.add('hidden');
         document.getElementById('loginContainer').classList.remove('hidden');
+        document.getElementById('criarMensagem').textContent = '';
     };
 
-    window.criarConta = function() {
+    window.criarContaEnviarCodigo = function() {
         const telefone = document.getElementById('criarTelefone').value.trim();
-        const senha = document.getElementById('criarSenha').value.trim();
         const nome = document.getElementById('criarNome').value.trim();
         const msg = document.getElementById('criarMensagem');
 
-        if (!telefone || !senha || !nome) {
+        if (!telefone || !nome) {
             msg.textContent = 'Preencha todos os campos.';
             return;
         }
-        if (senha.length < 6) {
-            msg.textContent = 'Senha deve ter pelo menos 6 caracteres.';
+
+        msg.textContent = 'Enviando código...';
+        
+        auth.signInWithPhoneNumber(telefone, window.RecaptchaVerifier2)
+            .then((result) => {
+                confirmationResult = result;
+                telefoneVerificando = telefone;
+                msg.textContent = '✅ Código enviado! Digite abaixo:';
+                document.getElementById('divCriarCodigoVerificacao').classList.add('ativo');
+                document.getElementById('btnCriarEnviarCodigo').textContent = '📱 Reenviar código';
+            })
+            .catch((error) => {
+                msg.textContent = '❌ Erro: ' + error.message;
+            });
+    };
+
+    window.criarContaVerificarCodigo = function() {
+        const codigo = document.getElementById('criarCodigoVerificacao').value.trim();
+        const telefone = document.getElementById('criarTelefone').value.trim();
+        const nome = document.getElementById('criarNome').value.trim();
+        const msg = document.getElementById('criarMensagem');
+
+        if (!codigo) {
+            msg.textContent = 'Digite o código recebido.';
             return;
         }
 
-        msg.textContent = 'Criando conta...';
-        auth.createUserWithEmailAndPassword(telefone + '@starweb.com', senha)
-            .then((userCredential) => {
-                const user = userCredential.user;
+        msg.textContent = 'Verificando...';
+        
+        confirmationResult.confirm(codigo)
+            .then((result) => {
+                const user = result.user;
                 return db.collection('usuarios').doc(user.uid).set({
                     nome: nome,
                     telefone: telefone,
-                    email: telefone + '@starweb.com',
                     criadoEm: new Date()
                 }).then(() => {
-                    msg.textContent = 'Conta criada com sucesso! Faça login.';
+                    msg.textContent = '✅ Conta criada com sucesso!';
+                    document.getElementById('criarCodigoVerificacao').value = '';
+                    document.getElementById('divCriarCodigoVerificacao').classList.remove('ativo');
                     document.getElementById('criarTelefone').value = '';
-                    document.getElementById('criarSenha').value = '';
                     document.getElementById('criarNome').value = '';
                     setTimeout(() => voltarLogin(), 1500);
                 });
             })
             .catch((error) => {
-                msg.textContent = 'Erro: ' + error.message;
+                msg.textContent = '❌ Código inválido. Tente novamente.';
             });
     };
 
     window.logout = function() {
         auth.signOut();
+        location.reload();
     };
 
     function carregarAdminPanel() {
@@ -1163,6 +1232,18 @@
             });
             fecharMenuLateral();
         });
+    });
+
+    // Recaptcha para login
+    window.RecaptchaVerifier = new firebase.auth.RecaptchaVerifier('btnEnviarCodigo', {
+        size: 'invisible',
+        callback: function(response) {}
+    });
+
+    // Recaptcha para criar conta
+    window.RecaptchaVerifier2 = new firebase.auth.RecaptchaVerifier('btnCriarEnviarCodigo', {
+        size: 'invisible',
+        callback: function(response) {}
     });
 </script>
 
