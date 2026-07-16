@@ -1,15 +1,12 @@
-
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StarWeb</title>
-    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
     <style>
         * {
             margin: 0;
@@ -354,7 +351,6 @@
             content: "⚡ ";
             color: #b31b1b;
         }
-
         .login-container {
             max-width: 450px;
             margin: 2rem auto;
@@ -439,9 +435,6 @@
         .login-container .aviso strong {
             color: #b33;
         }
-        .login-container .hidden {
-            display: none !important;
-        }
         .admin-panel {
             background: #1a1111;
             border-left: 6px solid #b31b1b;
@@ -502,6 +495,10 @@
             background: #3a8f3a;
             box-shadow: 0 0 20px #2a6f2a;
         }
+        .admin-panel .btn-banir:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
         .status-banido {
             color: #ff4a4a;
             font-weight: 700;
@@ -509,12 +506,6 @@
         .status-ativo {
             color: #6a8a6a;
             font-weight: 700;
-        }
-        .usuario-logado {
-            color: #6a8a6a;
-            font-size: 0.9rem;
-            text-align: right;
-            margin-top: 0.5rem;
         }
         .hidden {
             display: none !important;
@@ -598,6 +589,34 @@
             margin-top: 0.5rem;
             font-size: 0.9rem;
         }
+        .cargo-badge {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .cargo-super {
+            background: #6f1a1a;
+            color: #ff6a6a;
+            border: 1px solid #b31b1b;
+        }
+        .cargo-admin {
+            background: #1a3a6f;
+            color: #6a9aff;
+            border: 1px solid #2a5a9f;
+        }
+        .cargo-membro {
+            background: #2a2a2a;
+            color: #b0b0b0;
+            border: 1px solid #4a4a4a;
+        }
+        .usuario-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -638,9 +657,8 @@
             <button class="btn-login" onclick="fazerLogin()">Entrar</button>
             <button class="btn-criar-conta" onclick="mostrarCriarConta()">Criar conta</button>
             <div class="aviso">
-                <strong>⚠️ Sem conta você pode navegar, mas não pode participar do recrutamento.</strong>
+                <strong>⚠️ Crie uma conta para participar do recrutamento.</strong>
             </div>
-            <div class="usuario-logado" id="usuarioLogadoInfo"></div>
         </div>
 
         <div id="criarContaContainer" class="login-container hidden">
@@ -828,7 +846,7 @@
     <div id="aba6" class="aba hidden">
         <div class="admin-panel" id="adminPanel">
             <h3>👑 Painel Administrador</h3>
-            <p style="color:#b88; margin-bottom:1rem;">Gerencie os membros cadastrados e atribua etiquetas.</p>
+            <p style="color:#b88; margin-bottom:1rem;">Gerencie os membros cadastrados.</p>
             <div id="listaMembros">
                 <div class="loading" id="loadingMembros">
                     <div class="spinner"></div>
@@ -836,7 +854,7 @@
                 </div>
                 <table id="tabelaMembrosTable" style="display:none;">
                     <thead>
-                        <tr><th>Usuário</th><th>Telefone</th><th>Etiqueta</th><th>Status</th><th>Ações</th></tr>
+                        <tr><th>Usuário</th><th>Cargo</th><th>Status</th><th>Ações</th></tr>
                     </thead>
                     <tbody id="tabelaMembros">
                     </tbody>
@@ -861,7 +879,8 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const ADMIN_NOME = 'Admin';
+    const SUPER_ADMIN = 'Splash777';
+    const ADMINS = ['ghost777', 'kotak777'];
     let usuarioAtual = null;
 
     auth.onAuthStateChanged(async (user) => {
@@ -872,14 +891,12 @@
                     const data = doc.data();
                     usuarioAtual = {
                         uid: user.uid,
-                        nome: data.nome,
-                        telefone: data.telefone || ''
+                        nome: data.nome
                     };
                 } else {
                     usuarioAtual = {
                         uid: user.uid,
-                        nome: user.displayName || 'Usuário',
-                        telefone: ''
+                        nome: user.displayName || 'Usuário'
                     };
                 }
                 atualizarInterface();
@@ -892,13 +909,27 @@
         }
     });
 
+    function getCargo(nome) {
+        if (nome === SUPER_ADMIN) return 'super';
+        if (ADMINS.includes(nome)) return 'admin';
+        return 'membro';
+    }
+
+    function podeBanir(usuario, alvo) {
+        const cargoUsuario = getCargo(usuario);
+        const cargoAlvo = getCargo(alvo);
+        
+        if (cargoUsuario === 'super') return true;
+        if (cargoUsuario === 'admin' && cargoAlvo === 'membro') return true;
+        return false;
+    }
+
     function atualizarInterface() {
         const loginContainer = document.getElementById('loginContainer');
         const criarContainer = document.getElementById('criarContaContainer');
         const usuarioDisplay = document.getElementById('usuarioDisplay');
         const btnSair = document.getElementById('btnSair');
         const menuAdmin = document.getElementById('menuAdmin');
-        const usuarioLogadoInfo = document.getElementById('usuarioLogadoInfo');
         const recrutamentoStatus = document.getElementById('recrutamentoStatus');
         const btnFinalizar = document.getElementById('btnFinalizarRecrutamento');
         const abaAdmin = document.getElementById('aba6');
@@ -908,17 +939,22 @@
         if (usuarioAtual) {
             loginContainer.classList.add('hidden');
             criarContainer.classList.add('hidden');
-            usuarioDisplay.textContent = `👤 ${usuarioAtual.nome}`;
+            
+            const cargo = getCargo(usuarioAtual.nome);
+            let cargoLabel = 'Membro';
+            let cargoClass = 'cargo-membro';
+            if (cargo === 'super') { cargoLabel = '⭐ SUPER ADMIN'; cargoClass = 'cargo-super'; }
+            else if (cargo === 'admin') { cargoLabel = '🔹 ADMIN'; cargoClass = 'cargo-admin'; }
+            
+            usuarioDisplay.innerHTML = `👤 ${usuarioAtual.nome} <span class="cargo-badge ${cargoClass}">${cargoLabel}</span>`;
             btnSair.classList.remove('hidden');
             menuToggle.classList.remove('hidden');
-            usuarioLogadoInfo.textContent = `Logado como: ${usuarioAtual.nome}`;
             
             linksMenu.forEach(link => {
                 link.classList.remove('hidden');
             });
 
-            const isAdmin = usuarioAtual.nome.toLowerCase() === ADMIN_NOME.toLowerCase();
-            if (isAdmin) {
+            if (cargo === 'super' || cargo === 'admin') {
                 menuAdmin.classList.remove('hidden');
                 abaAdmin.classList.remove('hidden');
                 carregarAdminPanel();
@@ -953,7 +989,6 @@
             usuarioDisplay.textContent = '';
             btnSair.classList.add('hidden');
             menuToggle.classList.add('hidden');
-            usuarioLogadoInfo.textContent = '';
             recrutamentoStatus.innerHTML = '⚠️ Faça login para participar do recrutamento.';
             btnFinalizar.disabled = true;
             btnFinalizar.style.opacity = '0.5';
@@ -998,11 +1033,11 @@
         msg.textContent = 'Entrando...';
         auth.signInWithEmailAndPassword(usuario + '@starweb.com', senha)
             .then(() => {
-                msg.textContent = '';
                 msg.className = 'mensagem-sucesso';
                 msg.textContent = 'Login realizado com sucesso!';
                 document.getElementById('loginUsuario').value = '';
                 document.getElementById('loginSenha').value = '';
+                setTimeout(() => { msg.textContent = ''; }, 3000);
             })
             .catch((error) => {
                 msg.className = 'mensagem-erro';
@@ -1032,16 +1067,19 @@
 
     window.criarConta = function() {
         const nome = document.getElementById('criarNome').value.trim();
-        const telefone = document.getElementById('criarTelefone').value.trim();
         const senha = document.getElementById('criarSenha').value.trim();
         const msg = document.getElementById('criarMensagem');
 
         if (!nome || !senha) {
-            msg.textContent = 'Preencha nome e senha.';
+            msg.textContent = 'Preencha todos os campos.';
             return;
         }
         if (senha.length < 6) {
             msg.textContent = 'Senha deve ter pelo menos 6 caracteres.';
+            return;
+        }
+        if (nome === SUPER_ADMIN || ADMINS.includes(nome)) {
+            msg.textContent = 'Este nome de usuário é reservado.';
             return;
         }
 
@@ -1053,14 +1091,12 @@
                 const user = userCredential.user;
                 return db.collection('usuarios').doc(user.uid).set({
                     nome: nome,
-                    telefone: telefone || '',
                     email: nome + '@starweb.com',
                     criadoEm: new Date()
                 }).then(() => {
                     msg.className = 'mensagem-sucesso';
                     msg.textContent = 'Conta criada com sucesso! Faça login.';
                     document.getElementById('criarNome').value = '';
-                    document.getElementById('criarTelefone').value = '';
                     document.getElementById('criarSenha').value = '';
                     setTimeout(() => voltarLogin(), 2000);
                 });
@@ -1095,7 +1131,7 @@
             });
 
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#8a6a6a;">Nenhum usuário cadastrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8a6a6a;">Nenhum usuário cadastrado.</td></tr>';
                 loading.style.display = 'none';
                 table.style.display = 'table';
                 return;
@@ -1104,35 +1140,36 @@
             let carregados = 0;
             users.forEach((user) => {
                 const tr = document.createElement('tr');
+                const cargo = getCargo(user.nome);
+                let cargoLabel = 'Membro';
+                let cargoClass = 'cargo-membro';
+                if (cargo === 'super') { cargoLabel = '⭐ SUPER ADMIN'; cargoClass = 'cargo-super'; }
+                else if (cargo === 'admin') { cargoLabel = '🔹 ADMIN'; cargoClass = 'cargo-admin'; }
+
                 db.collection('banidos').doc(user.nome).get().then(banDoc => {
                     const banido = banDoc.exists ? banDoc.data() : null;
-                    return db.collection('etiquetas').doc(user.nome).get().then(etqDoc => {
-                        const etiqueta = etqDoc.exists ? etqDoc.data().valor : '';
-                        tr.innerHTML = `
-                            <td>${user.nome || 'Sem nome'}</td>
-                            <td>${user.telefone || 'Não informado'}</td>
-                            <td>
-                                <div class="etiqueta-editar">
-                                    <span class="etiqueta-badge">${etiqueta || 'Sem etiqueta'}</span>
-                                    <input type="text" id="etiquetaInput_${user.nome}" placeholder="Nova etiqueta" value="${etiqueta}">
-                                    <button onclick="salvarEtiqueta('${user.nome}')">Salvar</button>
-                                </div>
-                            </td>
-                            <td>${banido ? '<span class="status-banido">Banido</span>' : '<span class="status-ativo">Ativo</span>'}</td>
-                            <td>
-                                ${banido ? 
-                                    `<button class="btn-desbanir" onclick="desbanirUsuario('${user.nome}')">Desbanir</button>` :
-                                    `<button class="btn-banir" onclick="abrirModalBan('${user.nome}')">Banir</button>`
-                                }
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                        carregados++;
-                        if (carregados === users.length) {
-                            loading.style.display = 'none';
-                            table.style.display = 'table';
-                        }
-                    });
+                    
+                    const pode = podeBanir(usuarioAtual ? usuarioAtual.nome : '', user.nome);
+                    
+                    tr.innerHTML = `
+                        <td><strong>${user.nome}</strong></td>
+                        <td><span class="cargo-badge ${cargoClass}">${cargoLabel}</span></td>
+                        <td>${banido ? '<span class="status-banido">Banido</span>' : '<span class="status-ativo">Ativo</span>'}</td>
+                        <td>
+                            ${banido ? 
+                                `<button class="btn-desbanir" onclick="desbanirUsuario('${user.nome}')">Desbanir</button>` :
+                                pode ? 
+                                    `<button class="btn-banir" onclick="abrirModalBan('${user.nome}')">Banir</button>` :
+                                    `<button class="btn-banir" disabled style="opacity:0.4;cursor:not-allowed;">Banir</button>`
+                            }
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                    carregados++;
+                    if (carregados === users.length) {
+                        loading.style.display = 'none';
+                        table.style.display = 'table';
+                    }
                 });
             });
         }).catch(err => {
@@ -1140,18 +1177,15 @@
         });
     }
 
-    window.salvarEtiqueta = function(nome) {
-        const input = document.getElementById(`etiquetaInput_${nome}`);
-        if (!input) return;
-        const valor = input.value.trim();
-        db.collection('etiquetas').doc(nome).set({ valor: valor })
-            .then(() => {
-                carregarAdminPanel();
-            })
-            .catch(err => alert('Erro ao salvar etiqueta: ' + err.message));
-    };
-
     window.abrirModalBan = function(nome) {
+        if (nome === SUPER_ADMIN) {
+            alert('Não é possível banir o Super Admin!');
+            return;
+        }
+        if (ADMINS.includes(nome) && getCargo(usuarioAtual.nome) !== 'super') {
+            alert('Apenas o Super Admin pode banir outros administradores.');
+            return;
+        }
         const motivo = prompt('Motivo do ban:');
         if (!motivo) return;
         db.collection('banidos').doc(nome).set({ motivo: motivo, data: new Date() })
@@ -1189,19 +1223,14 @@
             alert('Marque pelo menos uma opção em cada pergunta antes de finalizar.');
             return;
         }
-        const nomeUsuario = usuarioAtual.nome;
-        const telefoneUsuario = usuarioAtual.telefone || 'Não informado';
-        const mensagem = encodeURIComponent(`📋 *RESPOSTAS RECRUTAMENTO STARWEB*\n\n👤 Usuário: ${nomeUsuario}\n📱 Telefone: ${telefoneUsuario}\n\n` + respostas.join('\n'));
-        const numero = '5527995303545';
-        const url = `https://wa.me/${numero}?text=${mensagem}`;
+        const mensagem = encodeURIComponent(`📋 *RESPOSTAS RECRUTAMENTO STARWEB*\n\n👤 Usuário: ${usuarioAtual.nome}\n\n` + respostas.join('\n'));
+        const url = `https://wa.me/5527995303545?text=${mensagem}`;
         window.open(url, '_blank');
     };
 
     window.contratarBot = function() {
-        const numero = '557597029009';
         const mensagem = encodeURIComponent('Olá vim pelo site Star, e tenho interesse na Yoshikawa ESM');
-        const url = `https://wa.me/${numero}?text=${mensagem}`;
-        window.open(url, '_blank');
+        window.open(`https://wa.me/557597029009?text=${mensagem}`, '_blank');
     };
 
     const menuToggle = document.getElementById('menuToggle');
