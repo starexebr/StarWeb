@@ -125,7 +125,6 @@
 
 <div class="container">
 
-    <!-- ===== TELA DE LOGIN ===== -->
     <div id="abaLogin" class="aba ativa">
         <div class="login-container" id="loginContainer">
             <h2>🔐 Entrar</h2>
@@ -146,7 +145,6 @@
         </div>
     </div>
 
-    <!-- ===== ABA 1 - STAR ===== -->
     <div id="aba1" class="aba">
         <div class="card">
             <h2>✦ Star Community</h2>
@@ -159,7 +157,6 @@
         </div>
     </div>
 
-    <!-- ===== ABA 2 - REGRAS ===== -->
     <div id="aba2" class="aba">
         <div class="card">
             <h2>⛔ Regras</h2>
@@ -179,7 +176,6 @@
         </div>
     </div>
 
-    <!-- ===== ABA 3 - PATENTES ===== -->
     <div id="aba3" class="aba">
         <div class="card">
             <h2>👑 Patentes do Grupo</h2>
@@ -190,7 +186,6 @@
         </div>
     </div>
 
-    <!-- ===== ABA 4 - RECRUTAMENTO ===== -->
     <div id="aba4" class="aba">
         <div class="card">
             <h2>📋 Recrutamento</h2>
@@ -213,7 +208,6 @@
         </div>
     </div>
 
-    <!-- ===== ABA 5 - YOSHIKAWA ESM ===== -->
     <div id="aba5" class="aba">
         <div class="card">
             <h2>🤖 Yoshikawa ESM</h2>
@@ -226,7 +220,6 @@
         </div>
     </div>
 
-    <!-- ===== ABA 6 - ADMIN ===== -->
     <div id="aba6" class="aba hidden">
         <div class="admin-panel">
             <h3>👑 Painel Administrador</h3>
@@ -262,7 +255,6 @@
     let usuarioAtual = null;
     let loginVerificado = false;
 
-    // Força a tela de login a aparecer primeiro
     auth.signOut();
 
     auth.onAuthStateChanged(async (user) => {
