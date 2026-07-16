@@ -260,6 +260,10 @@
     const SUPER_ADMIN = 'Splash777';
     const ADMINS = ['ghost777', 'kotak777'];
     let usuarioAtual = null;
+    let loginVerificado = false;
+
+    // Força a tela de login a aparecer primeiro
+    auth.signOut();
 
     auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -304,6 +308,7 @@
         const abaAdmin = document.getElementById('aba6');
         const menuToggle = document.getElementById('menuToggle');
         const linksMenu = document.querySelectorAll('.menu-lateral a');
+        const abaLogin = document.getElementById('abaLogin');
 
         if (usuarioAtual) {
             loginContainer.classList.add('hidden');
@@ -367,7 +372,7 @@
 
             const abas = document.querySelectorAll('.aba');
             abas.forEach(aba => aba.classList.remove('ativa'));
-            document.getElementById('abaLogin').classList.add('ativa');
+            abaLogin.classList.add('ativa');
         }
     }
 
