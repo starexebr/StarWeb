@@ -571,6 +571,26 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .admin-tag {
+            background: #6f2a2a;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            color: #ffd0d0;
+            border: 1px solid #a33;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
+        .super-admin-tag {
+            background: #8f1a1a;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            color: #ffd0d0;
+            border: 1px solid #ff4a4a;
+            display: inline-block;
+            margin-left: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -605,7 +625,7 @@
     <div id="abaLogin" class="aba ativa">
         <div class="login-container" id="loginContainer">
             <h2>🔐 Entrar</h2>
-            <input type="text" id="loginTelefone" placeholder="Ex: +55 2799999" maxlength="15">
+            <input type="text" id="loginUsuario" placeholder="Nome de usuário">
             <input type="password" id="loginSenha" placeholder="Senha">
             <div id="loginMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
             <button class="btn-login" onclick="fazerLogin()">Entrar</button>
@@ -619,9 +639,8 @@
 
         <div id="criarContaContainer" class="login-container hidden">
             <h2>📝 Criar Conta</h2>
-            <input type="text" id="criarTelefone" placeholder="Ex: +55 2799999" maxlength="15">
+            <input type="text" id="criarUsuario" placeholder="Nome de usuário">
             <input type="password" id="criarSenha" placeholder="Senha (mínimo 6 caracteres)">
-            <input type="text" id="criarNome" placeholder="Nome de usuário">
             <div id="criarMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
             <button class="btn-login" onclick="criarConta()">Criar conta</button>
             <button class="btn-criar-conta" onclick="voltarLogin()">Voltar</button>
@@ -811,7 +830,7 @@
                 </div>
                 <table id="tabelaMembrosTable" style="display:none;">
                     <thead>
-                        <tr><th>Usuário</th><th>Telefone</th><th>Etiqueta</th><th>Status</th><th>Ações</th></tr>
+                        <tr><th>Usuário</th><th>Etiqueta</th><th>Status</th><th>Ações</th></tr>
                     </thead>
                     <tbody id="tabelaMembros">
                     </tbody>
@@ -836,7 +855,8 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const ADMIN_NUMERO = '5527995303545';
+    const ADMINS = ['Splash777', 'ghost777', 'Kotak777', 'Devy777'];
+    const SUPER_ADMIN = 'Splash777';
     let usuarioAtual = null;
 
     auth.onAuthStateChanged(async (user) => {
@@ -847,14 +867,12 @@
                     const data = doc.data();
                     usuarioAtual = {
                         uid: user.uid,
-                        nome: data.nome,
-                        telefone: data.telefone
+                        nome: data.nome
                     };
                 } else {
                     usuarioAtual = {
                         uid: user.uid,
-                        nome: user.displayName || 'Usuário',
-                        telefone: user.phoneNumber || ''
+                        nome: user.displayName || 'Usuário'
                     };
                 }
                 atualizarInterface();
@@ -881,11 +899,14 @@
         if (usuarioAtual) {
             loginContainer.classList.add('hidden');
             criarContainer.classList.add('hidden');
-            usuarioDisplay.textContent = `👤 ${usuarioAtual.nome}`;
+            const isAdmin = ADMINS.includes(usuarioAtual.nome);
+            const isSuperAdmin = usuarioAtual.nome === SUPER_ADMIN;
+            const adminTag = isSuperAdmin ? '<span class="super-admin-tag">👑 SUPER ADMIN</span>' : 
+                             isAdmin ? '<span class="admin-tag">🛡️ ADMIN</span>' : '';
+            usuarioDisplay.innerHTML = `👤 ${usuarioAtual.nome} ${adminTag}`;
             btnSair.classList.remove('hidden');
-            usuarioLogadoInfo.textContent = `Logado como: ${usuarioAtual.nome} (${usuarioAtual.telefone})`;
+            usuarioLogadoInfo.textContent = `Logado como: ${usuarioAtual.nome}`;
             
-            const isAdmin = usuarioAtual.telefone === ADMIN_NUMERO;
             if (isAdmin) {
                 menuAdmin.classList.remove('hidden');
                 abaAdmin.classList.remove('hidden');
@@ -895,7 +916,7 @@
                 abaAdmin.classList.add('hidden');
             }
 
-            verificarBanido(usuarioAtual.telefone, (banido) => {
+            verificarBanido(usuarioAtual.nome, (banido) => {
                 if (banido) {
                     recrutamentoStatus.innerHTML = `⛔ <strong style="color:#ff4a4a;">VOCÊ FOI BANIDO!</strong> Motivo: ${banido.motivo}`;
                     btnFinalizar.disabled = true;
@@ -919,7 +940,7 @@
         } else {
             loginContainer.classList.remove('hidden');
             criarContainer.classList.add('hidden');
-            usuarioDisplay.textContent = '';
+            usuarioDisplay.innerHTML = '';
             btnSair.classList.add('hidden');
             usuarioLogadoInfo.textContent = '';
             recrutamentoStatus.innerHTML = '⚠️ Faça login para participar do recrutamento.';
@@ -937,8 +958,8 @@
         }
     }
 
-    function verificarBanido(telefone, callback) {
-        db.collection('banidos').doc(telefone).get().then(doc => {
+    function verificarBanido(nome, callback) {
+        db.collection('banidos').doc(nome).get().then(doc => {
             if (doc.exists) {
                 callback(doc.data());
             } else {
@@ -948,20 +969,20 @@
     }
 
     window.fazerLogin = function() {
-        const telefone = document.getElementById('loginTelefone').value.trim();
+        const nome = document.getElementById('loginUsuario').value.trim();
         const senha = document.getElementById('loginSenha').value.trim();
         const msg = document.getElementById('loginMensagem');
 
-        if (!telefone || !senha) {
+        if (!nome || !senha) {
             msg.textContent = 'Preencha todos os campos.';
             return;
         }
 
         msg.textContent = 'Entrando...';
-        auth.signInWithEmailAndPassword(telefone + '@starweb.com', senha)
+        auth.signInWithEmailAndPassword(nome.toLowerCase() + '@starweb.com', senha)
             .then(() => {
                 msg.textContent = '';
-                document.getElementById('loginTelefone').value = '';
+                document.getElementById('loginUsuario').value = '';
                 document.getElementById('loginSenha').value = '';
             })
             .catch((error) => {
@@ -980,12 +1001,11 @@
     };
 
     window.criarConta = function() {
-        const telefone = document.getElementById('criarTelefone').value.trim();
+        const nome = document.getElementById('criarUsuario').value.trim();
         const senha = document.getElementById('criarSenha').value.trim();
-        const nome = document.getElementById('criarNome').value.trim();
         const msg = document.getElementById('criarMensagem');
 
-        if (!telefone || !senha || !nome) {
+        if (!nome || !senha) {
             msg.textContent = 'Preencha todos os campos.';
             return;
         }
@@ -995,19 +1015,16 @@
         }
 
         msg.textContent = 'Criando conta...';
-        auth.createUserWithEmailAndPassword(telefone + '@starweb.com', senha)
+        auth.createUserWithEmailAndPassword(nome.toLowerCase() + '@starweb.com', senha)
             .then((userCredential) => {
                 const user = userCredential.user;
                 return db.collection('usuarios').doc(user.uid).set({
                     nome: nome,
-                    telefone: telefone,
-                    email: telefone + '@starweb.com',
                     criadoEm: new Date()
                 }).then(() => {
                     msg.textContent = '✅ Conta criada com sucesso! Faça login.';
-                    document.getElementById('criarTelefone').value = '';
+                    document.getElementById('criarUsuario').value = '';
                     document.getElementById('criarSenha').value = '';
-                    document.getElementById('criarNome').value = '';
                     setTimeout(() => voltarLogin(), 1500);
                 });
             })
@@ -1037,30 +1054,36 @@
             });
 
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#8a6a6a;">Nenhum usuário cadastrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#8a6a6a;">Nenhum usuário cadastrado.</td></tr>';
             } else {
                 users.forEach(user => {
                     const tr = document.createElement('tr');
-                    db.collection('banidos').doc(user.telefone).get().then(banDoc => {
+                    db.collection('banidos').doc(user.nome).get().then(banDoc => {
                         const banido = banDoc.exists ? banDoc.data() : null;
-                        const etiquetaDoc = db.collection('etiquetas').doc(user.telefone).get();
+                        const etiquetaDoc = db.collection('etiquetas').doc(user.nome).get();
                         return etiquetaDoc.then(etqDoc => {
                             const etiqueta = etqDoc.exists ? etqDoc.data().valor : '';
+                            const isAdmin = ADMINS.includes(user.nome);
+                            const isSuperAdmin = user.nome === SUPER_ADMIN;
+                            const podeBanir = usuarioAtual && (usuarioAtual.nome === SUPER_ADMIN || (!isAdmin && !isSuperAdmin));
+                            
                             tr.innerHTML = `
-                                <td>${user.nome || 'Sem nome'}</td>
-                                <td>${user.telefone}</td>
+                                <td>${user.nome || 'Sem nome'} ${isSuperAdmin ? '<span class="super-admin-tag">👑 SUPER</span>' : isAdmin ? '<span class="admin-tag">🛡️ ADM</span>' : ''}</td>
                                 <td>
                                     <div class="etiqueta-editar">
                                         <span class="etiqueta-badge">${etiqueta || 'Sem etiqueta'}</span>
-                                        <input type="text" id="etiquetaInput_${user.telefone}" placeholder="Nova etiqueta" value="${etiqueta}">
-                                        <button onclick="salvarEtiqueta('${user.telefone}')">Salvar</button>
+                                        <input type="text" id="etiquetaInput_${user.nome}" placeholder="Nova etiqueta" value="${etiqueta}">
+                                        <button onclick="salvarEtiqueta('${user.nome}')">Salvar</button>
                                     </div>
                                 </td>
                                 <td>${banido ? '<span class="status-banido">Banido</span>' : 'Ativo'}</td>
                                 <td>
-                                    ${banido ? 
-                                        `<button class="btn-desbanir" onclick="desbanirUsuario('${user.telefone}')">Desbanir</button>` :
-                                        `<button class="btn-banir" onclick="abrirModalBan('${user.telefone}')">Banir</button>`
+                                    ${podeBanir ? 
+                                        (banido ? 
+                                            `<button class="btn-desbanir" onclick="desbanirUsuario('${user.nome}')">Desbanir</button>` :
+                                            `<button class="btn-banir" onclick="abrirModalBan('${user.nome}')">Banir</button>`
+                                        ) :
+                                        '<span style="color:#6a5a5a;font-size:0.8rem;">Sem permissão</span>'
                                     }
                                 </td>
                             `;
@@ -1077,24 +1100,28 @@
         });
     }
 
-    window.salvarEtiqueta = function(telefone) {
-        const input = document.getElementById(`etiquetaInput_${telefone}`);
+    window.salvarEtiqueta = function(nome) {
+        const input = document.getElementById(`etiquetaInput_${nome}`);
         if (!input) return;
         const valor = input.value.trim();
-        db.collection('etiquetas').doc(telefone).set({ valor: valor })
+        db.collection('etiquetas').doc(nome).set({ valor: valor })
             .then(() => {
                 carregarAdminPanel();
             })
             .catch(err => alert('Erro ao salvar etiqueta: ' + err.message));
     };
 
-    window.abrirModalBan = function(telefone) {
+    window.abrirModalBan = function(nome) {
+        if (ADMINS.includes(nome) && usuarioAtual.nome !== SUPER_ADMIN) {
+            alert('❌ Apenas o SUPER ADMIN pode banir outros administradores!');
+            return;
+        }
         const motivo = prompt('Motivo do ban:');
         if (!motivo) return;
-        db.collection('banidos').doc(telefone).set({ motivo: motivo, data: new Date() })
+        db.collection('banidos').doc(nome).set({ motivo: motivo, data: new Date() })
             .then(() => {
                 carregarAdminPanel();
-                if (usuarioAtual && usuarioAtual.telefone === telefone) {
+                if (usuarioAtual && usuarioAtual.nome === nome) {
                     alert('Você foi banido!');
                     logout();
                 }
@@ -1102,8 +1129,8 @@
             .catch(err => alert('Erro ao banir: ' + err.message));
     };
 
-    window.desbanirUsuario = function(telefone) {
-        db.collection('banidos').doc(telefone).delete()
+    window.desbanirUsuario = function(nome) {
+        db.collection('banidos').doc(nome).delete()
             .then(() => {
                 carregarAdminPanel();
             })
@@ -1127,8 +1154,7 @@
             return;
         }
         const nomeUsuario = usuarioAtual.nome;
-        const telefoneUsuario = usuarioAtual.telefone;
-        const mensagem = encodeURIComponent(`📋 *RESPOSTAS RECRUTAMENTO STARWEB*\n\n👤 Usuário: ${nomeUsuario}\n📱 Telefone: ${telefoneUsuario}\n\n` + respostas.join('\n'));
+        const mensagem = encodeURIComponent(`📋 *RESPOSTAS RECRUTAMENTO STARWEB*\n\n👤 Usuário: ${nomeUsuario}\n\n` + respostas.join('\n'));
         const numero = '5527995303545';
         const url = `https://wa.me/${numero}?text=${mensagem}`;
         window.open(url, '_blank');
