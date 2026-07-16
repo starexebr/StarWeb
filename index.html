@@ -586,7 +586,7 @@
     <div id="abaLogin" class="aba ativa">
         <div class="login-container" id="loginContainer">
             <h2>🔐 Entrar</h2>
-            <input type="text" id="loginTelefone" placeholder="Número de telefone (Nome De Usuario)" maxlength="15">
+            <input type="text" id="loginUsuario" placeholder="Nome de usuário">
             <input type="password" id="loginSenha" placeholder="Senha">
             <div id="loginMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
             <button class="btn-login" onclick="fazerLogin()">Entrar</button>
@@ -600,9 +600,9 @@
 
         <div id="criarContaContainer" class="login-container hidden">
             <h2>📝 Criar Conta</h2>
-            <input type="text" id="criarTelefone" placeholder="Nome De Usuario" maxlength="15">
-            <input type="password" id="criarSenha" placeholder="Senha (mínimo 6 caracteres)">
             <input type="text" id="criarNome" placeholder="Nome de usuário">
+            <input type="text" id="criarTelefone" placeholder="Número de telefone (ex: 55279995303545)" maxlength="15">
+            <input type="password" id="criarSenha" placeholder="Senha (mínimo 6 caracteres)">
             <div id="criarMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
             <button class="btn-login" onclick="criarConta()">Criar conta</button>
             <button class="btn-criar-conta" onclick="voltarLogin()">Voltar</button>
@@ -835,7 +835,7 @@
                     usuarioAtual = {
                         uid: user.uid,
                         nome: user.displayName || 'Usuário',
-                        telefone: user.phoneNumber || ''
+                        telefone: ''
                     };
                 }
                 atualizarInterface();
@@ -867,7 +867,7 @@
             usuarioDisplay.textContent = `👤 ${usuarioAtual.nome}`;
             btnSair.classList.remove('hidden');
             menuToggle.classList.remove('hidden');
-            usuarioLogadoInfo.textContent = `Logado como: ${usuarioAtual.nome} (${usuarioAtual.telefone})`;
+            usuarioLogadoInfo.textContent = `Logado como: ${usuarioAtual.nome}`;
             
             linksMenu.forEach(link => {
                 link.classList.remove('hidden');
@@ -928,6 +928,10 @@
     }
 
     function verificarBanido(telefone, callback) {
+        if (!telefone) {
+            callback(null);
+            return;
+        }
         db.collection('banidos').doc(telefone).get().then(doc => {
             if (doc.exists) {
                 callback(doc.data());
@@ -938,20 +942,20 @@
     }
 
     window.fazerLogin = function() {
-        const telefone = document.getElementById('loginTelefone').value.trim();
+        const usuario = document.getElementById('loginUsuario').value.trim();
         const senha = document.getElementById('loginSenha').value.trim();
         const msg = document.getElementById('loginMensagem');
 
-        if (!telefone || !senha) {
+        if (!usuario || !senha) {
             msg.textContent = 'Preencha todos os campos.';
             return;
         }
 
         msg.textContent = 'Entrando...';
-        auth.signInWithEmailAndPassword(telefone + '@starweb.com', senha)
+        auth.signInWithEmailAndPassword(usuario + '@starweb.com', senha)
             .then(() => {
                 msg.textContent = '';
-                document.getElementById('loginTelefone').value = '';
+                document.getElementById('loginUsuario').value = '';
                 document.getElementById('loginSenha').value = '';
             })
             .catch((error) => {
@@ -970,12 +974,12 @@
     };
 
     window.criarConta = function() {
+        const nome = document.getElementById('criarNome').value.trim();
         const telefone = document.getElementById('criarTelefone').value.trim();
         const senha = document.getElementById('criarSenha').value.trim();
-        const nome = document.getElementById('criarNome').value.trim();
         const msg = document.getElementById('criarMensagem');
 
-        if (!telefone || !senha || !nome) {
+        if (!nome || !telefone || !senha) {
             msg.textContent = 'Preencha todos os campos.';
             return;
         }
@@ -985,19 +989,19 @@
         }
 
         msg.textContent = 'Criando conta...';
-        auth.createUserWithEmailAndPassword(telefone + '@starweb.com', senha)
+        auth.createUserWithEmailAndPassword(nome + '@starweb.com', senha)
             .then((userCredential) => {
                 const user = userCredential.user;
                 return db.collection('usuarios').doc(user.uid).set({
                     nome: nome,
                     telefone: telefone,
-                    email: telefone + '@starweb.com',
+                    email: nome + '@starweb.com',
                     criadoEm: new Date()
                 }).then(() => {
                     msg.textContent = 'Conta criada com sucesso! Faça login.';
+                    document.getElementById('criarNome').value = '';
                     document.getElementById('criarTelefone').value = '';
                     document.getElementById('criarSenha').value = '';
-                    document.getElementById('criarNome').value = '';
                     setTimeout(() => voltarLogin(), 1500);
                 });
             })
@@ -1033,7 +1037,7 @@
             }
 
             let carregados = 0;
-            users.forEach((user, index) => {
+            users.forEach((user) => {
                 const tr = document.createElement('tr');
                 db.collection('banidos').doc(user.telefone).get().then(banDoc => {
                     const banido = banDoc.exists ? banDoc.data() : null;
