@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+        <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -46,6 +47,9 @@
         .menu-hamburguer:hover {
             color: #ff5a5a;
             transform: scale(1.05);
+        }
+        .menu-hamburguer.hidden {
+            display: none !important;
         }
         .logo-symbol {
             font-size: 1.8rem;
@@ -107,6 +111,9 @@
             background: #6f1f1f;
             border-left-color: #e05050;
             color: #fff0f0;
+        }
+        .menu-lateral a.hidden {
+            display: none !important;
         }
         .overlay {
             position: fixed;
@@ -229,6 +236,11 @@
             background: #c92a2a;
             transform: scale(1.02);
             box-shadow: 0 0 40px #a32020;
+        }
+        .btn-finalizar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
         .btn-contratar {
             background: #a32020;
@@ -427,6 +439,9 @@
         .login-container .aviso strong {
             color: #b33;
         }
+        .login-container .hidden {
+            display: none !important;
+        }
         .admin-panel {
             background: #1a1111;
             border-left: 6px solid #b31b1b;
@@ -472,8 +487,27 @@
             background: #a32020;
             box-shadow: 0 0 20px #6f1a1a;
         }
+        .admin-panel .btn-desbanir {
+            background: #2a6f2a;
+            color: #fff;
+            border: none;
+            padding: 0.4rem 1.2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            margin-right: 0.3rem;
+        }
+        .admin-panel .btn-desbanir:hover {
+            background: #3a8f3a;
+            box-shadow: 0 0 20px #2a6f2a;
+        }
         .status-banido {
             color: #ff4a4a;
+            font-weight: 700;
+        }
+        .status-ativo {
+            color: #6a8a6a;
             font-weight: 700;
         }
         .usuario-logado {
@@ -552,6 +586,18 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .mensagem-erro {
+            color: #ff6a6a;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .mensagem-sucesso {
+            color: #6a8a6a;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -588,12 +634,11 @@
             <h2>🔐 Entrar</h2>
             <input type="text" id="loginUsuario" placeholder="Nome de usuário">
             <input type="password" id="loginSenha" placeholder="Senha">
-            <div id="loginMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
+            <div id="loginMensagem" class="mensagem-erro"></div>
             <button class="btn-login" onclick="fazerLogin()">Entrar</button>
             <button class="btn-criar-conta" onclick="mostrarCriarConta()">Criar conta</button>
             <div class="aviso">
-                <strong>⚠️ Sem conta você pode navegar, mas não pode participar do recrutamento.</strong><br>
-                <span style="font-size:0.8rem;">Usuário não cadastrado será identificado no recrutamento.</span>
+                <strong>⚠️ Sem conta você pode navegar, mas não pode participar do recrutamento.</strong>
             </div>
             <div class="usuario-logado" id="usuarioLogadoInfo"></div>
         </div>
@@ -601,9 +646,9 @@
         <div id="criarContaContainer" class="login-container hidden">
             <h2>📝 Criar Conta</h2>
             <input type="text" id="criarNome" placeholder="Nome de usuário">
-            <input type="text" id="criarTelefone" placeholder="Número de telefone (ex: 55279995303545)" maxlength="15">
+            <input type="text" id="criarTelefone" placeholder="Telefone (opcional - ex: 55279995303545)" maxlength="15">
             <input type="password" id="criarSenha" placeholder="Senha (mínimo 6 caracteres)">
-            <div id="criarMensagem" style="color:#ff6a6a; text-align:center; margin-top:0.5rem; font-size:0.9rem;"></div>
+            <div id="criarMensagem" class="mensagem-erro"></div>
             <button class="btn-login" onclick="criarConta()">Criar conta</button>
             <button class="btn-criar-conta" onclick="voltarLogin()">Voltar</button>
         </div>
@@ -817,7 +862,7 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const ADMIN_NUMERO = '5527995303545';
+    const ADMIN_NOME = 'Admin';
     let usuarioAtual = null;
 
     auth.onAuthStateChanged(async (user) => {
@@ -829,7 +874,7 @@
                     usuarioAtual = {
                         uid: user.uid,
                         nome: data.nome,
-                        telefone: data.telefone
+                        telefone: data.telefone || ''
                     };
                 } else {
                     usuarioAtual = {
@@ -873,7 +918,7 @@
                 link.classList.remove('hidden');
             });
 
-            const isAdmin = usuarioAtual.telefone === ADMIN_NUMERO;
+            const isAdmin = usuarioAtual.nome.toLowerCase() === ADMIN_NOME.toLowerCase();
             if (isAdmin) {
                 menuAdmin.classList.remove('hidden');
                 abaAdmin.classList.remove('hidden');
@@ -883,7 +928,7 @@
                 abaAdmin.classList.add('hidden');
             }
 
-            verificarBanido(usuarioAtual.telefone, (banido) => {
+            verificarBanido(usuarioAtual.nome, (banido) => {
                 if (banido) {
                     recrutamentoStatus.innerHTML = `⛔ <strong style="color:#ff4a4a;">VOCÊ FOI BANIDO!</strong> Motivo: ${banido.motivo}`;
                     btnFinalizar.disabled = true;
@@ -927,12 +972,12 @@
         }
     }
 
-    function verificarBanido(telefone, callback) {
-        if (!telefone) {
+    function verificarBanido(nome, callback) {
+        if (!nome) {
             callback(null);
             return;
         }
-        db.collection('banidos').doc(telefone).get().then(doc => {
+        db.collection('banidos').doc(nome).get().then(doc => {
             if (doc.exists) {
                 callback(doc.data());
             } else {
@@ -955,22 +1000,35 @@
         auth.signInWithEmailAndPassword(usuario + '@starweb.com', senha)
             .then(() => {
                 msg.textContent = '';
+                msg.className = 'mensagem-sucesso';
+                msg.textContent = 'Login realizado com sucesso!';
                 document.getElementById('loginUsuario').value = '';
                 document.getElementById('loginSenha').value = '';
             })
             .catch((error) => {
-                msg.textContent = 'Erro: ' + error.message;
+                msg.className = 'mensagem-erro';
+                if (error.code === 'auth/user-not-found') {
+                    msg.textContent = 'Usuário não encontrado.';
+                } else if (error.code === 'auth/wrong-password') {
+                    msg.textContent = 'Senha incorreta.';
+                } else {
+                    msg.textContent = 'Erro: ' + error.message;
+                }
             });
     };
 
     window.mostrarCriarConta = function() {
         document.getElementById('loginContainer').classList.add('hidden');
         document.getElementById('criarContaContainer').classList.remove('hidden');
+        document.getElementById('criarMensagem').textContent = '';
+        document.getElementById('criarMensagem').className = 'mensagem-erro';
     };
 
     window.voltarLogin = function() {
         document.getElementById('criarContaContainer').classList.add('hidden');
         document.getElementById('loginContainer').classList.remove('hidden');
+        document.getElementById('loginMensagem').textContent = '';
+        document.getElementById('loginMensagem').className = 'mensagem-erro';
     };
 
     window.criarConta = function() {
@@ -979,8 +1037,8 @@
         const senha = document.getElementById('criarSenha').value.trim();
         const msg = document.getElementById('criarMensagem');
 
-        if (!nome || !telefone || !senha) {
-            msg.textContent = 'Preencha todos os campos.';
+        if (!nome || !senha) {
+            msg.textContent = 'Preencha nome e senha.';
             return;
         }
         if (senha.length < 6) {
@@ -989,24 +1047,32 @@
         }
 
         msg.textContent = 'Criando conta...';
+        msg.className = 'mensagem-erro';
+        
         auth.createUserWithEmailAndPassword(nome + '@starweb.com', senha)
             .then((userCredential) => {
                 const user = userCredential.user;
                 return db.collection('usuarios').doc(user.uid).set({
                     nome: nome,
-                    telefone: telefone,
+                    telefone: telefone || '',
                     email: nome + '@starweb.com',
                     criadoEm: new Date()
                 }).then(() => {
+                    msg.className = 'mensagem-sucesso';
                     msg.textContent = 'Conta criada com sucesso! Faça login.';
                     document.getElementById('criarNome').value = '';
                     document.getElementById('criarTelefone').value = '';
                     document.getElementById('criarSenha').value = '';
-                    setTimeout(() => voltarLogin(), 1500);
+                    setTimeout(() => voltarLogin(), 2000);
                 });
             })
             .catch((error) => {
-                msg.textContent = 'Erro: ' + error.message;
+                msg.className = 'mensagem-erro';
+                if (error.code === 'auth/email-already-in-use') {
+                    msg.textContent = 'Este nome de usuário já está em uso.';
+                } else {
+                    msg.textContent = 'Erro: ' + error.message;
+                }
             });
     };
 
@@ -1039,25 +1105,25 @@
             let carregados = 0;
             users.forEach((user) => {
                 const tr = document.createElement('tr');
-                db.collection('banidos').doc(user.telefone).get().then(banDoc => {
+                db.collection('banidos').doc(user.nome).get().then(banDoc => {
                     const banido = banDoc.exists ? banDoc.data() : null;
-                    return db.collection('etiquetas').doc(user.telefone).get().then(etqDoc => {
+                    return db.collection('etiquetas').doc(user.nome).get().then(etqDoc => {
                         const etiqueta = etqDoc.exists ? etqDoc.data().valor : '';
                         tr.innerHTML = `
                             <td>${user.nome || 'Sem nome'}</td>
-                            <td>${user.telefone}</td>
+                            <td>${user.telefone || 'Não informado'}</td>
                             <td>
                                 <div class="etiqueta-editar">
                                     <span class="etiqueta-badge">${etiqueta || 'Sem etiqueta'}</span>
-                                    <input type="text" id="etiquetaInput_${user.telefone}" placeholder="Nova etiqueta" value="${etiqueta}">
-                                    <button onclick="salvarEtiqueta('${user.telefone}')">Salvar</button>
+                                    <input type="text" id="etiquetaInput_${user.nome}" placeholder="Nova etiqueta" value="${etiqueta}">
+                                    <button onclick="salvarEtiqueta('${user.nome}')">Salvar</button>
                                 </div>
                             </td>
-                            <td>${banido ? '<span class="status-banido">Banido</span>' : 'Ativo'}</td>
+                            <td>${banido ? '<span class="status-banido">Banido</span>' : '<span class="status-ativo">Ativo</span>'}</td>
                             <td>
                                 ${banido ? 
-                                    `<button class="btn-banir" onclick="desbanirUsuario('${user.telefone}')">Desbanir</button>` :
-                                    `<button class="btn-banir" onclick="abrirModalBan('${user.telefone}')">Banir</button>`
+                                    `<button class="btn-desbanir" onclick="desbanirUsuario('${user.nome}')">Desbanir</button>` :
+                                    `<button class="btn-banir" onclick="abrirModalBan('${user.nome}')">Banir</button>`
                                 }
                             </td>
                         `;
@@ -1075,24 +1141,24 @@
         });
     }
 
-    window.salvarEtiqueta = function(telefone) {
-        const input = document.getElementById(`etiquetaInput_${telefone}`);
+    window.salvarEtiqueta = function(nome) {
+        const input = document.getElementById(`etiquetaInput_${nome}`);
         if (!input) return;
         const valor = input.value.trim();
-        db.collection('etiquetas').doc(telefone).set({ valor: valor })
+        db.collection('etiquetas').doc(nome).set({ valor: valor })
             .then(() => {
                 carregarAdminPanel();
             })
             .catch(err => alert('Erro ao salvar etiqueta: ' + err.message));
     };
 
-    window.abrirModalBan = function(telefone) {
+    window.abrirModalBan = function(nome) {
         const motivo = prompt('Motivo do ban:');
         if (!motivo) return;
-        db.collection('banidos').doc(telefone).set({ motivo: motivo, data: new Date() })
+        db.collection('banidos').doc(nome).set({ motivo: motivo, data: new Date() })
             .then(() => {
                 carregarAdminPanel();
-                if (usuarioAtual && usuarioAtual.telefone === telefone) {
+                if (usuarioAtual && usuarioAtual.nome === nome) {
                     alert('Você foi banido!');
                     logout();
                 }
@@ -1100,8 +1166,8 @@
             .catch(err => alert('Erro ao banir: ' + err.message));
     };
 
-    window.desbanirUsuario = function(telefone) {
-        db.collection('banidos').doc(telefone).delete()
+    window.desbanirUsuario = function(nome) {
+        db.collection('banidos').doc(nome).delete()
             .then(() => {
                 carregarAdminPanel();
             })
@@ -1125,7 +1191,7 @@
             return;
         }
         const nomeUsuario = usuarioAtual.nome;
-        const telefoneUsuario = usuarioAtual.telefone;
+        const telefoneUsuario = usuarioAtual.telefone || 'Não informado';
         const mensagem = encodeURIComponent(`📋 *RESPOSTAS RECRUTAMENTO STARWEB*\n\n👤 Usuário: ${nomeUsuario}\n📱 Telefone: ${telefoneUsuario}\n\n` + respostas.join('\n'));
         const numero = '5527995303545';
         const url = `https://wa.me/${numero}?text=${mensagem}`;
